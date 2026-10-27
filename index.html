@@ -1206,7 +1206,7 @@ function detailsHtml(type, d, pfx){
   if (ARCH_TYPES.has(type)){
     const ar = d.arches || {};
     const sel = ar.boven && ar.onder ? 'beide' : ar.boven ? 'boven' : ar.onder ? 'onder' : '';
-    h += `<div class="dsec d-arches"><span class="mini">Welke boog</span>${seg('archsel', sel, ARCH_OPTS)}<div class="arch-rows">${['boven','onder'].filter(a => sel === 'beide' || sel === a).map(a => archRowHtml(type, a, ar[a])).join('')}</div></div>`;
+    h += `<div class="dsec d-arches"><span class="mini">${type === 'base' ? 'Welke base' : 'Welke boog'}</span>${seg('archsel', sel, ARCH_OPTS)}<div class="arch-rows">${['boven','onder'].filter(a => sel === 'beide' || sel === a).map(a => archRowHtml(type, a, ar[a])).join('')}</div></div>`;
   }
   if (type === 'imm') h += shadeHtml(pfx, d);
   if (type === 'steg'){
