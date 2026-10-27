@@ -255,6 +255,16 @@ input[type=text],input[type=search],input[type=date],input[type=email],input[typ
 textarea{height:auto;padding:9px 11px;resize:vertical;line-height:1.45}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);background:var(--surface)}
 .nr-input{font-family:var(--f-mono)}
+.ac-list{position:fixed;z-index:3000;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);padding:5px;display:flex;flex-direction:column;max-height:340px;overflow:auto}
+.ac-head{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-3);padding:4px 8px 5px}
+.ac-item{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:baseline;border:0;background:none;text-align:left;padding:8px;border-radius:7px;cursor:pointer;font-size:14px;color:var(--fg)}
+.ac-item b{font:600 14px var(--f-mono)}
+.ac-item span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ac-item small{color:var(--fg-3);font-size:11.5px;white-space:nowrap}
+.ac-item.hi,.ac-item:hover{background:var(--accent-soft)}
+.ac-item mark{background:color-mix(in srgb,var(--accent) 25%,transparent);color:inherit;border-radius:3px}
+.ac-new{font-size:12.5px;color:var(--fg-3);padding:7px 8px 4px;border-top:1px solid var(--line-soft);margin-top:3px}
+.ac-new b{font-family:var(--f-mono);color:var(--fg-2)}
 .shade-grid{display:flex;flex-wrap:wrap;gap:6px}
 .schip{position:relative;display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 11px 0 7px;border:1.5px solid var(--line);border-radius:20px;cursor:pointer;font:600 12.5px var(--f-mono);background:var(--surface)}
 .schip input{position:absolute;opacity:0;pointer-events:none}
@@ -410,7 +420,7 @@ body.dragging{user-select:none;-webkit-user-select:none}
     <input type="text" id="cShadeCustom" placeholder="Bijv. B2 of 2M2" hidden autocomplete="off">
   </div>
   <div class="cgrid">
-    <div><label for="cNr">Patiëntnummer</label><input type="text" id="cNr" class="nr-input" list="patientList" autocomplete="off" spellcheck="false"></div>
+    <div><label for="cNr">Patiëntnummer</label><input type="text" id="cNr" class="nr-input" autocomplete="off" spellcheck="false"></div>
     <div><label for="cName">Patiëntnaam</label><input type="text" id="cName" autocomplete="off"></div>
     <div><label for="cDate">Klaar op</label><input type="date" id="cDate"><div class="daychips" id="cDays"></div></div>
     <div><label for="cTime">Uiterlijk om</label><select id="cTime"></select></div>
@@ -424,7 +434,6 @@ body.dragging{user-select:none;-webkit-user-select:none}
     <button type="submit" class="btn primary sm">Opdracht opslaan</button>
   </div>
 </form>
-<datalist id="patientList"></datalist>
 
 <!-- Bewerken -->
 <dialog id="editor" aria-labelledby="edTitle">
@@ -445,7 +454,7 @@ body.dragging{user-select:none;-webkit-user-select:none}
         <div class="shade-row"><div class="shade-grid" id="fShades"></div><input id="fShadeCustom" type="text" placeholder="Bijv. B2 of 2M2" hidden autocomplete="off"></div>
       </fieldset>
       <div class="row2">
-        <div><label class="lbl" for="fNr">Patiëntnummer</label><input id="fNr" type="text" class="nr-input" list="patientList" autocomplete="off" spellcheck="false"></div>
+        <div><label class="lbl" for="fNr">Patiëntnummer</label><input id="fNr" type="text" class="nr-input" autocomplete="off" spellcheck="false"></div>
         <div><label class="lbl" for="fName">Patiëntnaam</label><input id="fName" type="text" autocomplete="off"></div>
       </div>
       <div class="row3">
@@ -625,7 +634,7 @@ const Store = {
   },
   save(){ if (!writeLS(this.KEY, {version:2, savedAt:nowIso(), tasks:this.tasks}) && !Sync.client) toast('Opslaan mislukt: deze browser blokkeert lokale opslag.'); },
   get(id){ return this.tasks.find(t => t.id === id); },
-  put(t){ t.updatedAt = nowIso(); this.replace(t); this.save(); Sync.push([t]); render(); },
+  put(t){ t.updatedAt = nowIso(); this.replace(t); this.save(); Sync.push([t]); Patients.touch(t); render(); },
   replace(t){ const i = this.tasks.findIndex(x => x.id === t.id); if (i < 0) this.tasks.push(t); else this.tasks[i] = t; },
   removeHard(pred){ const gone = this.tasks.filter(pred).map(t => t.id); this.tasks = this.tasks.filter(t => !pred(t)); this.save(); Sync.remove(gone); render(); },
   live(){ return this.tasks.filter(t => !t.deleted); }
@@ -656,8 +665,29 @@ const Sync = {
     Store.save();
     this.state = 'online';
     if (up.length) await this.push(up);
+    await this.syncPatients();
     this.subscribe();
     updateSyncBadge(); render();
+  },
+  async syncPatients(){
+    const {data, error} = await this.client.from('patients').select('nr,name,created_at,created_by,last_used_at');
+    if (error) return; // tabel nog niet aangemaakt: lokaal blijven bijhouden
+    const remote = {};
+    data.forEach(r => remote[r.nr] = Patients.fromRow(r));
+    const up = [];
+    for (const p of Object.values(Patients.map)){
+      const r = remote[p.nr];
+      if (!r){ remote[p.nr] = p; up.push(p); }
+      else if ((p.lastUsedAt||'') > (r.lastUsedAt||'')){ remote[p.nr] = Object.assign({}, r, {name:p.name || r.name, lastUsedAt:p.lastUsedAt}); up.push(remote[p.nr]); }
+    }
+    Patients.map = remote;
+    for (const t of Store.tasks){ const p = Patients.absorb(t); if (p && !up.includes(p)) up.push(p); }
+    Patients.save();
+    if (up.length) await this.client.from('patients').upsert(up.map(Patients.toRow));
+  },
+  pushPatient(p){
+    if (!this.client || this.state !== 'online') return;
+    this.client.from('patients').upsert(Patients.toRow(p)).then(({error}) => { if (error) console.warn('Patiënt opslaan mislukt', error.message); });
   },
   async push(list){
     if (!this.client || !list.length) return;
@@ -679,8 +709,13 @@ const Sync = {
     this.channel = this.client.channel('tasks-live')
       .on('postgres_changes', {event:'*', schema:'public', table:'tasks'}, p => {
         if (p.eventType === 'DELETE'){ const id = p.old && p.old.id; Store.tasks = Store.tasks.filter(t => t.id !== id); }
-        else if (p.new && p.new.data){ const t = p.new.data, cur = Store.get(t.id); if (!cur || (t.updatedAt||'') >= (cur.updatedAt||'')) Store.replace(t); }
+        else if (p.new && p.new.data){ const t = p.new.data, cur = Store.get(t.id); if (!cur || (t.updatedAt||'') >= (cur.updatedAt||'')) Store.replace(t); Patients.absorb(t); Patients.save(); }
         Store.save(); render();
+      })
+      .on('postgres_changes', {event:'*', schema:'public', table:'patients'}, p => {
+        if (p.eventType === 'DELETE'){ if (p.old && p.old.nr) delete Patients.map[p.old.nr]; }
+        else if (p.new && p.new.nr){ Patients.map[p.new.nr] = Patients.fromRow(p.new); }
+        Patients.save();
       })
       .subscribe(st => { if (st === 'SUBSCRIBED' && this.state !== 'login'){ this.retry(); } });
   },
@@ -692,6 +727,43 @@ const Sync = {
     if (ids.length) await this.push(Store.tasks.filter(t => ids.includes(t.id)));
   }
 };
+/* ---------- patiënten (eigen lijst, basis voor facturen per patiënt) ---------- */
+const PAT_KEY = 'labplanner.patients.v1';
+const Patients = {
+  map:{},
+  init(){ this.map = readLS(PAT_KEY) || {}; for (const t of Store.tasks) this.absorb(t); this.save(); },
+  save(){ writeLS(PAT_KEY, this.map); },
+  // Neemt de patiënt uit een opdracht over; geeft de patiënt terug als er iets veranderde.
+  absorb(t){
+    const nr = (t.patientNr || '').trim();
+    if (!nr || (t.example && ONLINE.url)) return null;
+    const at = t.updatedAt || t.createdAt || nowIso(), cur = this.map[nr];
+    if (!cur){ return this.map[nr] = {nr, name:t.patientName || '', createdAt:t.createdAt || at, createdBy:t.createdBy || '', lastUsedAt:at}; }
+    if (at > (cur.lastUsedAt || '')){ cur.lastUsedAt = at; if (t.patientName) cur.name = t.patientName; return cur; }
+    if (!cur.name && t.patientName){ cur.name = t.patientName; return cur; }
+    return null;
+  },
+  touch(t){ const p = this.absorb(t); this.save(); if (p) Sync.pushPatient(p); },
+  fromRow: r => ({nr:r.nr, name:r.name || '', createdAt:r.created_at, createdBy:r.created_by || '', lastUsedAt:r.last_used_at}),
+  toRow: p => ({nr:p.nr, name:p.name || '', created_at:p.createdAt || nowIso(), created_by:p.createdBy || null, last_used_at:p.lastUsedAt || nowIso(), updated_at:nowIso()}),
+  // Laatst gebruikt bovenaan; bij typen eerst nummers die zo beginnen, dan namen.
+  search(q){
+    q = (q || '').trim().toLowerCase();
+    const score = p => {
+      if (!q) return 0;
+      const nr = p.nr.toLowerCase(), nm = (p.name || '').toLowerCase();
+      if (nr === q) return 5;
+      if (nr.startsWith(q)) return 4;
+      if (nm.startsWith(q) || nm.split(/[\s.\-]+/).some(w => w && w.startsWith(q))) return 3;
+      if (nr.includes(q)) return 2;
+      if (nm.includes(q)) return 1;
+      return -1;
+    };
+    return Object.values(this.map).map(p => ({p, s:score(p)})).filter(x => x.s >= 0)
+      .sort((a,b) => b.s - a.s || (b.p.lastUsedAt||'').localeCompare(a.p.lastUsedAt||'')).slice(0, 8).map(x => x.p);
+  }
+};
+
 window.addEventListener('online', () => Sync.retry());
 setInterval(() => Sync.retry(), 30000);
 
@@ -937,10 +1009,68 @@ const radioVal = (root, name) => (root.querySelector(`input[name="${name}"]:chec
 const setRadio = (root, name, v) => root.querySelectorAll(`input[name="${name}"]`).forEach(r => r.checked = r.value === v);
 function ensureOption(sel, val){ if (val && ![...sel.options].some(o => o.value === val)){ const o = document.createElement('option'); o.value = val; o.textContent = val; sel.appendChild(o); } sel.value = val; }
 
-function patientMap(){ const m = {}; [...Store.tasks].sort((a,b) => (a.createdAt||'').localeCompare(b.createdAt||'')).forEach(t => { if (t.patientNr) m[t.patientNr] = t.patientName || m[t.patientNr] || ''; }); return m; }
-function fillPatientList(){ F('patientList').innerHTML = Object.entries(patientMap()).map(([nr,nm]) => `<option value="${esc(nr)}">${esc(nm)}</option>`).join(''); }
-function autoName(nrEl, nameEl){ nrEl.addEventListener('input', () => { const m = patientMap(), v = nrEl.value.trim(); if (m[v] && !nameEl.value.trim()) nameEl.value = m[v]; }); }
-autoName(F('cNr'), F('cName')); autoName(F('fNr'), F('fName'));
+/* Patiëntenzoeker: klik = laatst gebruikte patiënten, typen = filteren op nummer of naam.
+   Pijltjes kiezen, Enter of Tab neemt over, Esc sluit. */
+function relDays(iso){ if (!iso) return ''; const n = daysBetween(ymd(new Date(iso)), todayStr()); return n <= 0 ? 'vandaag' : n === 1 ? 'gisteren' : n < 30 ? `${n} dagen geleden` : shortDate(iso); }
+function markStart(text, q){ const t = String(text || ''); if (!q) return esc(t); const i = t.toLowerCase().indexOf(q.toLowerCase()); return i < 0 ? esc(t) : esc(t.slice(0,i)) + '<mark>' + esc(t.slice(i, i + q.length)) + '</mark>' + esc(t.slice(i + q.length)); }
+function patientPicker(nrEl, nameEl){
+  const box = document.createElement('div');
+  box.className = 'ac-list'; box.hidden = true; box.setAttribute('role','listbox');
+  nrEl.closest('form').appendChild(box);
+  let items = [], hi = -1, src = nrEl;
+  function draw(){
+    const q = src.value.trim();
+    const exact = q && Patients.map[q];
+    box.innerHTML = `<div class="ac-head">${q ? 'Gevonden' : 'Laatst gebruikt'}</div>`
+      + items.map((p,i) => `<button type="button" tabindex="-1" role="option" class="ac-item${i===hi?' hi':''}" data-i="${i}" aria-selected="${i===hi}"><b>${markStart(p.nr, src === nrEl ? q : '')}</b><span>${markStart(p.name || '—', src === nameEl ? q : '')}</span><small>${relDays(p.lastUsedAt)}</small></button>`).join('')
+      + (src === nrEl && q && !exact ? `<div class="ac-new">${items.length ? 'Niet in de lijst? ' : ''}<b>${esc(q)}</b> wordt bij opslaan als nieuwe patiënt bewaard.</div>` : '');
+  }
+  function place(){
+    const r = src.getBoundingClientRect(), w = Math.max(r.width, Math.min(340, innerWidth - 16));
+    box.style.width = w + 'px';
+    box.style.left = Math.max(8, Math.min(r.left, innerWidth - w - 8)) + 'px';
+    const h = box.offsetHeight, below = innerHeight - r.bottom;
+    box.style.top = (below < h + 12 && r.top > below ? r.top - h - 4 : r.bottom + 4) + 'px';
+  }
+  function open(from){
+    src = from || src;
+    const q = src.value.trim();
+    items = Patients.search(q);
+    if (!items.length && !(src === nrEl && q)){ close(); return; }
+    hi = q && items.length ? 0 : -1;
+    box.hidden = false; draw(); place();
+  }
+  function close(){ box.hidden = true; hi = -1; }
+  function pick(p, keepFocus){
+    nrEl.value = p.nr; nameEl.value = p.name || '';
+    close();
+    if (!keepFocus) (src === nrEl ? nameEl : nrEl).focus();
+  }
+  for (const el of [nrEl, nameEl]){
+    el.addEventListener('focus', () => open(el));
+    el.addEventListener('input', () => {
+      open(el);
+      // Exact bekend nummer getypt: naam meteen invullen
+      if (el === nrEl){ const p = Patients.map[nrEl.value.trim()]; if (p && !nameEl.value.trim()) nameEl.value = p.name; }
+    });
+    el.addEventListener('blur', () => setTimeout(() => { if (document.activeElement !== nrEl && document.activeElement !== nameEl) close(); }, 120));
+    el.addEventListener('keydown', e => {
+      if (box.hidden) return;
+      if (e.key === 'ArrowDown' && items.length){ e.preventDefault(); hi = (hi + 1) % items.length; draw(); }
+      else if (e.key === 'ArrowUp' && items.length){ e.preventDefault(); hi = hi <= 0 ? items.length - 1 : hi - 1; draw(); }
+      else if (e.key === 'Enter' && hi >= 0){ e.preventDefault(); e.stopPropagation(); pick(items[hi]); }
+      else if (e.key === 'Tab' && hi >= 0 && el.value.trim() && !e.shiftKey){ pick(items[hi], true); }
+      else if (e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); close(); }
+    });
+  }
+  box.addEventListener('pointerdown', e => { e.preventDefault(); const b = e.target.closest('.ac-item'); if (b) pick(items[+b.dataset.i]); });
+  document.addEventListener('scroll', () => { if (!box.hidden) place(); }, true);
+  window.addEventListener('resize', () => { if (!box.hidden) place(); });
+  return {close};
+}
+const pickerC = patientPicker(F('cNr'), F('cName'));
+const pickerF = patientPicker(F('fNr'), F('fName'));
+editor.addEventListener('close', () => pickerF.close());
 
 function validate({type, custom, shade, shadeCustom, nr, name, date}){
   const errs = [];
@@ -976,7 +1106,7 @@ function openComposer(o){
   }
   F('cDays').innerHTML = days().slice(0,5).map(d => `<button type="button" data-d="${d}" title="${fmtDay(d)}">${DOW[dowIdx(parseYmd(d))]}</button>`).join('');
   F('cErr').hidden = true;
-  fillPatientList();
+
   renderList(); syncComposer();
   requestAnimationFrame(() => {
     composer.scrollIntoView({block:'nearest', behavior:'smooth'});
@@ -1036,7 +1166,7 @@ function openEditor(id){
   if (t.example) m += '<br>Voorbeeldopdracht';
   F('edMeta').innerHTML = m;
   F('histList').innerHTML = (t.history || []).slice().reverse().map(h => `<li><span>${fmtStampShort(h.at)}</span>${esc(h.what)} · ${esc(personName(h.by))}</li>`).join('') || '<li>Geen geschiedenis</li>';
-  fillPatientList(); syncEditor();
+  syncEditor();
   editor.showModal();
 }
 edForm.addEventListener('submit', e => {
@@ -1205,7 +1335,7 @@ F('importFile').addEventListener('change', async e => {
     const d = JSON.parse(await f.text()); if (!d || !Array.isArray(d.tasks)) throw new Error();
     let added = 0, updated = 0; const changed = [];
     for (const t of d.tasks){ if (!t || !t.id) continue; const cur = Store.get(t.id); if (!cur){ Store.tasks.push(t); changed.push(t); added++; } else if ((t.updatedAt||'') > (cur.updatedAt||'')){ Store.replace(t); changed.push(t); updated++; } }
-    Store.save(); Sync.push(changed.filter(t => !t.example)); render(); toast(`Back-up teruggezet: ${added} nieuw, ${updated} bijgewerkt`);
+    Store.save(); Sync.push(changed.filter(t => !t.example)); changed.forEach(t => Patients.touch(t)); render(); toast(`Back-up teruggezet: ${added} nieuw, ${updated} bijgewerkt`);
   } catch(_){ toast('Dit bestand is geen geldige Labplanner-back-up.'); }
 });
 F('importLbl').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); F('importFile').click(); } });
@@ -1289,6 +1419,7 @@ function seedExamples(){
 /* ---------- start ---------- */
 if (!Store.init() && !ONLINE.url) seedExamples();
 if (ONLINE.url) Store.tasks = Store.tasks.filter(t => !t.example);
+Patients.init();
 applySplit();
 render();
 Sync.start();
