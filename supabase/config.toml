@@ -1,1 +1,8 @@
 project_id = "labplanner"
+
+[auth]
+# Niemand kan zichzelf aanmelden; accounts worden in het Supabase-dashboard aangemaakt.
+enable_signup = false
+
+[auth.email]
+enable_signup = false
