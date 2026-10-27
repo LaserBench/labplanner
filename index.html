@@ -273,7 +273,9 @@ dialog{border:none;padding:0;border-radius:14px;background:var(--surface);color:
   width:min(640px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:hidden}
 dialog[open]{display:flex;flex-direction:column}
 dialog::backdrop{background:rgba(8,14,20,.5)}
-dialog form{display:flex;flex-direction:column;min-height:0;flex:1;margin:0}
+/* flex 1 1 auto (niet flex:1): Safari op iPhone maakt het venster anders 0 px hoog */
+dialog form{display:flex;flex-direction:column;min-height:0;flex:1 1 auto;margin:0}
+.dlg-head,.dlg-foot{flex:none}
 .dlg-head{display:flex;align-items:center;gap:10px;padding:16px 18px 12px;border-bottom:1px solid var(--line-soft)}
 .dlg-head h2{margin:0;font:700 20px/1.2 var(--f-display);flex:1;text-wrap:balance}
 .dlg-body{padding:16px 18px;overflow:auto;display:flex;flex-direction:column;gap:16px;min-height:0}
@@ -326,6 +328,8 @@ body.dragging{user-select:none;-webkit-user-select:none}
 
 @media (max-width:1100px){ .cgrid{grid-template-columns:repeat(3,minmax(0,1fr))} }
 @media (max-width:820px){
+  /* 16px voorkomt dat de iPhone inzoomt bij het tikken in een veld */
+  input[type=text],input[type=search],input[type=date],input[type=email],input[type=password],select,textarea{font-size:16px}
   .app{height:auto;min-height:100%}
   .work{display:flex;flex-direction:column;gap:14px}
   .splitter{display:none}
