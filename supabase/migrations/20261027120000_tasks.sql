@@ -19,5 +19,8 @@ create policy "Ingelogde gebruikers mogen alles"
   using (true)
   with check (true);
 
+-- Toegang voor ingelogde gebruikers (nodig omdat nieuwe tabellen niet automatisch worden opengezet)
+grant select, insert, update, delete on public.tasks to authenticated;
+
 -- 3. Live bijwerken: wijzigingen van de een verschijnen direct bij de ander
 alter publication supabase_realtime add table public.tasks;
