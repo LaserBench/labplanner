@@ -6,6 +6,7 @@
 <title>Labplanner</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="facturen.css">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
 <style>
 /* Layout: kopbalk; daaronder twee helften met een versleepbare scheiding.
@@ -259,6 +260,60 @@ input[type=text],input[type=search],input[type=date],input[type=email],input[typ
 textarea{height:auto;padding:9px 11px;resize:vertical;line-height:1.45}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);background:var(--surface)}
 .nr-input{font-family:var(--f-mono)}
+/* detailblok per opdrachttype */
+.details{display:flex;flex-direction:column;gap:12px}
+.details:empty{display:none}
+.dsec{display:flex;flex-direction:column;gap:6px;min-width:0}
+.dsec .mini,.pt-f .mini,.steg-grid .mini{display:block;font-size:11.5px;color:var(--fg-3);font-weight:600;margin:0 0 3px}
+.pt-rows{display:flex;flex-direction:column;gap:8px}
+.pt-row{display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap}
+.pt-f{display:flex;flex-direction:column;min-width:0}
+.pt-f:first-child{flex:0 1 150px}
+.pt-f.grow{flex:1 1 200px}
+.pt-rm{width:32px;height:38px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg-3);font-size:18px;cursor:pointer;flex:none}
+.pt-rm:hover{color:var(--danger);border-color:var(--danger)}
+.d-addpt{align-self:flex-start}
+.dseg{display:inline-flex;background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:3px;gap:2px;flex-wrap:wrap}
+.dseg button{border:0;background:none;height:30px;padding:0 11px;border-radius:6px;font-weight:600;font-size:13px;cursor:pointer;color:var(--fg-2);min-width:34px}
+.dseg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg)}
+.dseg button:disabled{opacity:.35;cursor:not-allowed}
+.arch-rows{display:flex;flex-direction:column;gap:6px;margin-top:4px}
+.arch-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 10px;border:1px solid var(--line-soft);border-radius:9px;background:var(--surface-2)}
+.arch-row>b{min-width:48px;font-size:13px}
+.chk{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:600;cursor:pointer}
+.chk input{width:17px;height:17px;accent-color:var(--accent)}
+.steg-grid{display:flex;gap:18px;flex-wrap:wrap}
+.scanbig{display:flex;align-items:center;gap:12px;padding:12px 14px;border:2px dashed var(--t-scan);border-radius:10px;font:800 15px/1 var(--f-ui);letter-spacing:.06em;color:var(--t-scan);cursor:pointer;background:var(--t-scan-bg)}
+.scanbig input{width:20px;height:20px;accent-color:var(--t-scan)}
+.chip.arch{color:var(--fg-2)}
+.chip.stegchip{background:var(--t-steg-bg);color:var(--t-steg);border-color:transparent}
+.chip.scanflag{background:var(--t-scan);color:#fff;border-color:transparent;font-weight:800;letter-spacing:.04em}
+.chip.warnchip{background:var(--danger-soft);color:var(--danger);border-color:transparent}
+.ac-arch{font:700 10px var(--f-mono);color:var(--fg-3);margin-left:3px}
+.ac-more{font-size:11px;color:var(--fg-3)}
+.lotbox{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.lotbox .mini{flex-basis:100%;font-size:11.5px;color:var(--fg-3);font-weight:600}
+/* onderdelen-navigatie en extra schermen */
+.views{display:flex;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:3px;gap:2px}
+.views button{border:0;background:none;height:30px;padding:0 13px;border-radius:7px;font-weight:700;font-size:13.5px;cursor:pointer;color:var(--fg-2)}
+.views button[aria-pressed="true"]{background:var(--fg);color:var(--surface)}
+.view{flex:1;min-height:0;overflow:auto;padding-block:14px 18px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.vpanel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.vhead h2{margin:0 0 4px;font:700 20px/1.2 var(--f-display)}
+.vhead p{margin:0;max-width:70ch}
+.lot-table{display:flex;flex-direction:column}
+.lt-row{display:grid;grid-template-columns:minmax(150px,1.1fr) minmax(130px,1fr) auto minmax(150px,1.6fr);gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line-soft);margin:0}
+.lt-head{font-size:11.5px;color:var(--fg-3);font-weight:700;letter-spacing:.05em;text-transform:uppercase;border-bottom-color:var(--line)}
+.lt-mat{font-weight:600}
+.lt-mat small{display:block;font-weight:400;color:var(--fg-3);font-size:11.5px}
+.lt-mat small.lt-empty{color:var(--warn);font-weight:600}
+.lt-hist{display:flex;flex-wrap:wrap;gap:4px}
+.lt-old{cursor:pointer;font-family:var(--f-mono)}
+.lt-old:hover{border-color:var(--accent);color:var(--accent)}
+.lot-add{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding-top:6px}
+.lot-add .mini{font-size:12px;color:var(--fg-3);font-weight:600;flex-basis:100%}
+.lot-add input{width:170px}
+@media (max-width:700px){ .lt-row{grid-template-columns:1fr 1fr auto} .lt-hist{grid-column:1/-1} .lt-head{display:none} }
 .ac-list{position:fixed;z-index:3000;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);padding:5px;display:flex;flex-direction:column;max-height:340px;overflow:auto}
 .ac-head{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-3);padding:4px 8px 5px}
 .ac-item{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:baseline;border:0;background:none;text-align:left;padding:8px;border-radius:7px;cursor:pointer;font-size:14px;color:var(--fg)}
@@ -370,6 +425,11 @@ body.dragging{user-select:none;-webkit-user-select:none}
       </div>
       <div><div class="brand-name">Labplanner</div><div class="brand-sub">Prothetiek &amp; freeswerk</div></div>
     </div>
+    <nav class="views" id="viewNav" aria-label="Onderdelen" hidden>
+      <button type="button" data-view="planner" aria-pressed="true">Planner</button>
+      <button type="button" data-view="billing" aria-pressed="false">Facturatie</button>
+      <button type="button" data-view="lots" aria-pressed="false">Lotnummers</button>
+    </nav>
     <div class="weeknav">
       <button class="icon-btn" id="prevWeek" type="button" aria-label="Vorige week" title="Vorige week (←)"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 3 5 8l5 5"/></svg></button>
       <button class="btn ghost" id="todayBtn" type="button" title="Naar deze week (T)">Vandaag</button>
@@ -411,21 +471,27 @@ body.dragging{user-select:none;-webkit-user-select:none}
       <div class="list-scroll" id="listScroll"><div class="list-inner" id="list"></div></div>
     </section>
   </div>
+  <section class="view" id="billingView" aria-label="Facturatie" hidden></section>
+  <section class="view" id="lotsView" aria-label="Lotnummers" hidden>
+    <div class="vpanel">
+      <div class="vhead"><h2>Lotnummers</h2><p class="hint">Het actieve lotnummer per materiaal komt automatisch op de opdracht zodra die op Klaar gaat, en daarmee op de factuur. Nieuwe zak of batch? Vul het nieuwe nummer in en klik op Opslaan.</p></div>
+      <div class="lot-table" id="lotTable"></div>
+      <form class="lot-add" id="lotAddForm" novalidate>
+        <span class="mini">Extra tandkleur toevoegen</span>
+        <input type="text" id="lotAddShade" placeholder="Tandkleur, bijv. B2" autocomplete="off">
+        <input type="text" id="lotAddLot" placeholder="Lotnummer" autocomplete="off">
+        <button type="submit" class="btn ghost sm">Toevoegen</button>
+      </form>
+    </div>
+  </section>
 </div>
 
 <!-- Aanmaakblok (wordt in de juiste statusgroep geplaatst) -->
 <form class="composer" id="composer" novalidate hidden>
   <div class="comp-title">Nieuwe opdracht in <span id="cStatusLbl" class="spill s-todo"><i></i>Te doen</span></div>
   <div class="tchips" id="cTypes" role="radiogroup" aria-label="Opdrachttype"></div>
-  <input type="text" id="cCustom" placeholder="Omschrijving, bijv. modellen scannen" hidden autocomplete="off">
-  <div class="shade-row" id="cShadeRow" hidden>
-    <span class="mini">Tandkleur</span>
-    <div class="shade-grid" id="cShades"></div>
-    <input type="text" id="cShadeCustom" placeholder="Bijv. B2 of 2M2" hidden autocomplete="off">
-  </div>
+  <div class="details" id="cDetails" data-pfx="c"></div>
   <div class="cgrid">
-    <div><label for="cNr">Patiëntnummer</label><input type="text" id="cNr" class="nr-input" autocomplete="off" spellcheck="false"></div>
-    <div><label for="cName">Patiëntnaam</label><input type="text" id="cName" autocomplete="off"></div>
     <div><label for="cDate">Klaar op</label><input type="date" id="cDate"><div class="daychips" id="cDays"></div></div>
     <div><label for="cTime">Uiterlijk om</label><select id="cTime"></select></div>
     <div><label for="cAssignee">Voor</label><select id="cAssignee"></select></div>
@@ -451,16 +517,8 @@ body.dragging{user-select:none;-webkit-user-select:none}
       <fieldset>
         <legend>Opdrachttype</legend>
         <div class="tchips" id="fTypes"></div>
-        <div class="sub" id="fCustomWrap" hidden><input id="fCustom" type="text" placeholder="Omschrijving" autocomplete="off"></div>
       </fieldset>
-      <fieldset id="fShadeWrap" hidden>
-        <legend>Tandkleur</legend>
-        <div class="shade-row"><div class="shade-grid" id="fShades"></div><input id="fShadeCustom" type="text" placeholder="Bijv. B2 of 2M2" hidden autocomplete="off"></div>
-      </fieldset>
-      <div class="row2">
-        <div><label class="lbl" for="fNr">Patiëntnummer</label><input id="fNr" type="text" class="nr-input" autocomplete="off" spellcheck="false"></div>
-        <div><label class="lbl" for="fName">Patiëntnaam</label><input id="fName" type="text" autocomplete="off"></div>
-      </div>
+      <div class="details" id="fDetails" data-pfx="f"></div>
       <div class="row3">
         <div><label class="lbl" for="fDate">Klaar op</label><input id="fDate" type="date"></div>
         <div><label class="lbl" for="fTime">Uiterlijk om</label><select id="fTime"></select></div>
@@ -471,6 +529,7 @@ body.dragging{user-select:none;-webkit-user-select:none}
         <div><label class="lbl" for="fNote">Notitie</label><textarea id="fNote" rows="1" placeholder="Optioneel"></textarea></div>
       </div>
       <p class="form-err" id="fErr" role="alert" hidden></p>
+      <div class="lotbox" id="fLots" hidden></div>
       <div class="meta" id="edMeta"></div>
       <details id="edHist"><summary>Geschiedenis</summary><ol id="histList"></ol></details>
     </div>
@@ -550,9 +609,23 @@ body.dragging{user-select:none;-webkit-user-select:none}
   </form>
 </dialog>
 
+<!-- Lotnummer ontbreekt -->
+<dialog id="lotAskDlg" aria-labelledby="lotAskTitle">
+  <form id="lotAskForm" novalidate>
+    <div class="dlg-head"><h2 id="lotAskTitle">Lotnummer ontbreekt</h2><button type="button" class="icon-btn bare" data-close aria-label="Later invullen"><svg width="16" height="16" viewBox="0 0 16 16" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3l10 10M13 3 3 13"/></svg></button></div>
+    <div class="dlg-body">
+      <p class="hint" style="margin:0">Voor <b id="lotAskTxt"></b> staat nog geen lotnummer in het tabblad Lotnummers. Vul het in, dan wordt het ook voor de volgende keer onthouden.</p>
+      <div id="lotAskFields" class="row2" style="grid-template-columns:1fr"></div>
+    </div>
+    <div class="dlg-foot"><span class="spacer"></span><button type="button" class="btn ghost" data-close>Later</button><button type="submit" class="btn primary">Opslaan</button></div>
+  </form>
+</dialog>
+
 <div class="pop" id="pop" role="menu" hidden></div>
 <div class="toast" id="toast" role="status" hidden></div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.79.0/dist/umd/supabase.min.js"></script>
 <script>
 (function(){
@@ -581,7 +654,10 @@ const STATUSES = [{k:'busy',label:'Mee bezig'},{k:'todo',label:'Te doen'},{k:'wa
 const PRIOS = [{k:'urgent',label:'Spoed'},{k:'high',label:'Hoog'},{k:'normal',label:'Normaal'},{k:'low',label:'Laag'},{k:'',label:'Geen'}];
 const DOW = ['ma','di','wo','do','vr','za','zo'];
 const MON = ['jan','feb','mrt','apr','mei','jun','jul','aug','sep','okt','nov','dec'];
-const FIELD_NAMES = {type:'type',typeCustom:'omschrijving',shade:'tandkleur',shadeCustom:'tandkleur',patientNr:'patiëntnummer',patientName:'naam',dueDate:'datum',dueTime:'tijd',status:'status',assignee:'voor',priority:'prioriteit',note:'notitie'};
+const FIELD_NAMES = {type:'type',typeCustom:'omschrijving',shade:'tandkleur',shadeCustom:'tandkleur',patientNr:'patiëntnummer',patientName:'naam',patients:'patiënten',arches:'bogen',steg:'steg',scanSteg:'ontwerp steg',dueDate:'datum',dueTime:'tijd',status:'status',assignee:'voor',priority:'prioriteit',note:'notitie'};
+const MULTI = new Set(['tryin','lepel']);          // meerdere patiënten per opdracht
+const ARCH_TYPES = new Set(['base','imm']);        // boven/onder per patiënt
+const ADMIN_EMAIL = 'info@nmept.com';              // ziet Facturatie en Lotnummers
 const TIMES = (() => { const a = []; for (let m = 7*60; m <= 19*60; m += 30) a.push(`${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`); return a; })();
 
 /* ---------- hulpjes ---------- */
@@ -660,6 +736,8 @@ const Sync = {
     await this.connect();
   },
   async connect(){
+    const sess = await this.client.auth.getSession();
+    this.email = (sess.data.session && sess.data.session.user.email || '').toLowerCase();
     const {data, error} = await this.client.from('tasks').select('id,data');
     if (error){ this.state = 'offline'; updateSyncBadge(error.message); return; }
     const remote = new Map(data.map(r => [r.id, r.data]));
@@ -671,9 +749,11 @@ const Sync = {
     this.state = 'online';
     if (up.length) await this.push(up);
     await this.syncPatients();
+    await Lots.load();
     fixScanTypes();
     this.subscribe();
-    updateSyncBadge(); render();
+    updateSyncBadge(); applyRole(); render();
+    window.dispatchEvent(new Event('lab:ready'));
   },
   async syncPatients(){
     const {data, error} = await this.client.from('patients').select('nr,name,created_at,created_by,last_used_at');
@@ -687,7 +767,7 @@ const Sync = {
       else if ((p.lastUsedAt||'') > (r.lastUsedAt||'')){ remote[p.nr] = Object.assign({}, r, {name:p.name || r.name, lastUsedAt:p.lastUsedAt}); up.push(remote[p.nr]); }
     }
     Patients.map = remote;
-    for (const t of Store.tasks){ const p = Patients.absorb(t); if (p && !up.includes(p)) up.push(p); }
+    for (const t of Store.tasks) for (const p of Patients.absorb(t)) if (!up.includes(p)) up.push(p);
     Patients.save();
     if (up.length) await this.client.from('patients').upsert(up.map(Patients.toRow));
   },
@@ -739,17 +819,20 @@ const Patients = {
   map:{},
   init(){ this.map = readLS(PAT_KEY) || {}; for (const t of Store.tasks) this.absorb(t); this.save(); },
   save(){ writeLS(PAT_KEY, this.map); },
-  // Neemt de patiënt uit een opdracht over; geeft de patiënt terug als er iets veranderde.
+  // Neemt de patiënt(en) uit een opdracht over; geeft de patiënten terug die veranderden.
   absorb(t){
-    const nr = (t.patientNr || '').trim();
-    if (!nr || (t.example && ONLINE.url)) return null;
-    const at = t.updatedAt || t.createdAt || nowIso(), cur = this.map[nr];
-    if (!cur){ return this.map[nr] = {nr, name:t.patientName || '', createdAt:t.createdAt || at, createdBy:t.createdBy || '', lastUsedAt:at}; }
-    if (at > (cur.lastUsedAt || '')){ cur.lastUsedAt = at; if (t.patientName) cur.name = t.patientName; return cur; }
-    if (!cur.name && t.patientName){ cur.name = t.patientName; return cur; }
-    return null;
+    if (t.example && ONLINE.url) return [];
+    const at = t.updatedAt || t.createdAt || nowIso(), changed = [];
+    for (const p of ptList(t)){
+      const nr = (p.nr || '').trim(); if (!nr) continue;
+      const cur = this.map[nr];
+      if (!cur){ changed.push(this.map[nr] = {nr, name:p.name || '', createdAt:t.createdAt || at, createdBy:t.createdBy || '', lastUsedAt:at}); continue; }
+      if (at > (cur.lastUsedAt || '')){ cur.lastUsedAt = at; if (p.name) cur.name = p.name; changed.push(cur); }
+      else if (!cur.name && p.name){ cur.name = p.name; changed.push(cur); }
+    }
+    return changed;
   },
-  touch(t){ const p = this.absorb(t); this.save(); if (p) Sync.pushPatient(p); },
+  touch(t){ const ps = this.absorb(t); this.save(); ps.forEach(p => Sync.pushPatient(p)); },
   fromRow: r => ({nr:r.nr, name:r.name || '', createdAt:r.created_at, createdBy:r.created_by || '', lastUsedAt:r.last_used_at}),
   toRow: p => ({nr:p.nr, name:p.name || '', created_at:p.createdAt || nowIso(), created_by:p.createdBy || null, last_used_at:p.lastUsedAt || nowIso(), updated_at:nowIso()}),
   // Laatst gebruikt bovenaan; bij typen eerst nummers die zo beginnen, dan namen.
@@ -769,6 +852,51 @@ const Patients = {
       .sort((a,b) => b.s - a.s || (b.p.lastUsedAt||'').localeCompare(a.p.lastUsedAt||'')).slice(0, 8).map(x => x.p);
   }
 };
+
+/* ---------- lotnummers ----------
+   Per materiaal het actieve lotnummer (laatst geactiveerd) plus eerder gebruikte lotnummers.
+   Bij Klaar wordt het actieve lotnummer op de opdracht vastgelegd; de factuur neemt het over. */
+const LOT_KEY = 'labplanner.lots.v1';
+const LOT_MATERIALS = [['tryin','Try-in resin'],['pmma','PMMA base'],['titanium','Titanium Grade 5']].concat(SHADES.map(([s]) => ['tand:' + s, 'Tandenboog ' + s]));
+const lotMaterialLabel = m => (LOT_MATERIALS.find(x => x[0] === m) || [m, m.startsWith('tand:') ? 'Tandenboog ' + m.slice(5) : m])[1];
+const shadeKey = t => t.shade === 'custom' ? (t.shadeCustom || '').trim().toUpperCase() : (t.shade || '');
+function lotNeeds(t){
+  if (t.type === 'base') return ['pmma'];
+  if (t.type === 'imm') return ['pmma', 'tand:' + shadeKey(t)];
+  if (t.type === 'steg') return ['titanium'];
+  if (t.type === 'tryin') return ['tryin'];
+  return [];
+}
+const Lots = {
+  rows: [],
+  init(){
+    this.rows = readLS(LOT_KEY) || [];
+    if (!this.rows.length && !ONLINE.url){ const at = nowIso(); this.rows = [['pmma','260127'],['tryin','260117'],['titanium','LH-21128']].map(([material, lot]) => ({material, lot, createdAt:at, activatedAt:at})); this.save(); }
+  },
+  save(){ writeLS(LOT_KEY, this.rows); },
+  async load(){
+    if (!Sync.client) return;
+    const {data, error} = await Sync.client.from('lots').select('*');
+    if (!error){ this.rows = data.map(r => ({material:r.material, lot:r.lot, createdAt:r.created_at, activatedAt:r.activated_at})); this.save(); }
+  },
+  history(m){ return this.rows.filter(r => r.material === m).sort((a,b) => (b.activatedAt || '').localeCompare(a.activatedAt || '')); },
+  current(m){ const h = this.history(m); return h.length ? h[0].lot : ''; },
+  materials(){
+    const extra = [...new Set(this.rows.map(r => r.material))].filter(m => !LOT_MATERIALS.some(x => x[0] === m));
+    return LOT_MATERIALS.concat(extra.map(m => [m, lotMaterialLabel(m)]));
+  },
+  async activate(material, lot){
+    lot = (lot || '').trim(); if (!lot) return;
+    const at = nowIso(); let r = this.rows.find(x => x.material === material && x.lot === lot);
+    if (r) r.activatedAt = at; else this.rows.push(r = {material, lot, createdAt:at, activatedAt:at});
+    this.save();
+    if (Sync.client){
+      const {error} = await Sync.client.from('lots').upsert({material, lot, created_at:r.createdAt, activated_at:at, created_by:settings.me});
+      if (error) toast('Lotnummer online opslaan mislukt: ' + error.message);
+    }
+  }
+};
+const isAdmin = () => Sync.client ? Sync.email === ADMIN_EMAIL : true;
 
 window.addEventListener('online', () => Sync.retry());
 setInterval(() => Sync.retry(), 30000);
@@ -796,6 +924,28 @@ const shadeColor = t => (SHADES.find(s => s[0] === t.shade) || [,'#d9d2c0'])[1];
 const statusLabel = k => (STATUSES.find(s => s.k === k) || STATUSES[1]).label;
 const prioLabel = k => (PRIOS.find(p => p.k === (k||'')) || PRIOS[4]).label;
 function shadeChip(t){ const l = shadeLabel(t); return l ? `<span class="chip shade"><i style="background:${shadeColor(t)}"></i>${esc(l)}</span>` : ''; }
+// Patiënten van een opdracht (meerdere bij afdruklepels en pasprotheses)
+function ptList(t){ return MULTI.has(t.type) && Array.isArray(t.patients) ? t.patients : ((t.patientNr || t.patientName) ? [{nr:t.patientNr || '', name:t.patientName || ''}] : []); }
+const archShort = p => p.boven && p.onder ? 'B+O' : p.boven ? 'B' : p.onder ? 'O' : '';
+const unitCount = t => (t.patients || []).reduce((n,p) => n + (p.boven ? 1 : 0) + (p.onder ? 1 : 0), 0);
+function detailChips(t){
+  const c = [];
+  if (t.type === 'scan' && t.scanSteg) c.push('<span class="chip scanflag">INCL. ONTWERP STEG</span>');
+  if (ARCH_TYPES.has(t.type) && t.arches){
+    for (const a of ['boven','onder']){
+      const x = t.arches[a]; if (!x) continue;
+      let s = a === 'boven' ? 'Boven' : 'Onder';
+      if (x.partial) s += ' · partieel';
+      c.push(`<span class="chip arch">${s}</span>`);
+      if (x.steg) c.push(`<span class="chip stegchip">${a === 'boven' ? 'B' : 'O'}: ${x.stegKind === 'bestaand' ? 'bestaande' : 'nieuwe'} steg</span>`);
+    }
+  }
+  if (t.type === 'steg' && t.steg && t.steg.implants) c.push(`<span class="chip arch">${t.steg.implants} impl. · ${t.steg.split ? 'gesplitst' : 'normaal'}</span>`);
+  if (MULTI.has(t.type) && t.patients && t.patients.length) c.push(`<span class="chip arch">${t.patients.length} pat. · ${unitCount(t)} st.</span>`);
+  const sc = shadeChip(t); if (sc) c.push(sc);
+  return c.join('');
+}
+const searchText = t => [typeLabel(t), shadeLabel(t), t.note, ...ptList(t).flatMap(p => [p.nr, p.name])].join(' ').toLowerCase();
 function statusIcon(k, size){
   const s = size || 16;
   const box = `width="${s}" height="${s}" viewBox="0 0 16 16" aria-hidden="true"`;
@@ -851,6 +1001,7 @@ function render(){
   if (press && press.active) return;
   renderTop(); renderWeek(); renderList();
   if (arcDlg.open) renderArchive();
+  window.dispatchEvent(new Event('lab:render'));
 }
 function renderTop(){
   const end = addDays(weekStart, settings.weekend ? 6 : 4);
@@ -866,8 +1017,8 @@ function acardHtml(t){
   const flag = (t.priority === 'urgent' || t.priority === 'high') ? `<span title="Prioriteit: ${prioLabel(t.priority)}">${flagSvg(t.priority, 13)}</span>` : '';
   return `<div class="acard t-${esc(t.type)}${t.status==='done'?' done':''}" data-id="${esc(t.id)}" tabindex="0" role="button" title="${esc(tip)}" aria-label="${esc(tip.replace(/\n/g,', '))}">
     <div class="ac-top"><button type="button" class="sdot" data-status-menu="${esc(t.id)}" aria-label="Status: ${statusLabel(t.status)}. Wijzigen">${statusIcon(t.status,15)}</button><span class="ac-type">${esc(typeLabel(t))}</span>${flag}${avatar(t.assignee, true)}</div>
-    ${(t.patientNr || t.patientName) ? `<div class="ac-pt">${t.patientNr ? `<b class="mono">${esc(t.patientNr)}</b>` : ''}${esc(t.patientName||'')}</div>` : ''}
-    ${shadeLabel(t) ? `<div class="ac-meta">${shadeChip(t)}</div>` : ''}
+    ${(() => { const ps = ptList(t), multi = MULTI.has(t.type); return ps.slice(0, multi ? 3 : 1).map(p => `<div class="ac-pt">${p.nr ? `<b class="mono">${esc(p.nr)}</b>` : ''}${esc(p.name || '')}${multi && archShort(p) ? ` <span class="ac-arch">${archShort(p)}</span>` : ''}</div>`).join('') + (multi && ps.length > 3 ? `<div class="ac-more">+${ps.length - 3} meer</div>` : ''); })()}
+    ${(() => { const ch = detailChips(t); return ch ? `<div class="ac-meta">${ch}</div>` : ''; })()}
   </div>`;
 }
 
@@ -898,7 +1049,7 @@ function rowHtml(t){
   const ds = dueState(t);
   return `<div class="lrow lcols t-${esc(t.type)}${t.status==='done'?' done':''}" data-id="${esc(t.id)}" tabindex="0" role="button">
     <button type="button" class="sdot" data-status-menu="${esc(t.id)}" aria-label="Status: ${statusLabel(t.status)}. Wijzigen">${statusIcon(t.status)}</button>
-    <div class="lname"><span class="ltype"><i class="sw"></i>${esc(typeLabel(t))}</span><span class="lpt">${t.patientNr ? `<b class="mono">${esc(t.patientNr)}</b>` : ''}${esc(t.patientName||'')}</span>${shadeChip(t)}${t.note ? `<span class="lnote" title="${esc(t.note)}">${noteSvg}</span>` : ''}</div>
+    <div class="lname"><span class="ltype"><i class="sw"></i>${esc(typeLabel(t))}</span><span class="lpt">${MULTI.has(t.type) && t.patients && t.patients.length > 1 ? esc(t.patients.map(p => p.nr || p.name).join(', ')) : `${t.patientNr ? `<b class="mono">${esc(t.patientNr)}</b>` : ''}${esc(t.patientName||'')}`}</span>${detailChips(t)}${t.note ? `<span class="lnote" title="${esc(t.note)}">${noteSvg}</span>` : ''}</div>
     <div><button type="button" class="icon-plain" data-assign-menu="${esc(t.id)}" aria-label="Voor: ${esc(personName(t.assignee))}. Wijzigen">${avatar(t.assignee)}</button></div>
     <div class="ldue ${ds}">${esc(dueLabel(t))}${dueRel(t) ? `<small>${dueRel(t)}</small>` : ''}</div>
     <div><button type="button" class="icon-plain" data-prio-menu="${esc(t.id)}" aria-label="Prioriteit: ${prioLabel(t.priority)}. Wijzigen" title="Prioriteit: ${prioLabel(t.priority)}">${flagSvg(t.priority)}</button></div>
@@ -912,7 +1063,7 @@ function renderList(){
   const q = F('listSearch').value.trim().toLowerCase();
   let live = Store.live();
   if (settings.scope === 'mine') live = live.filter(t => t.assignee === settings.me);
-  if (q) live = live.filter(t => [t.patientNr, t.patientName, typeLabel(t), shadeLabel(t), t.note].join(' ').toLowerCase().includes(q));
+  if (q) live = live.filter(t => searchText(t).includes(q));
   const overN = Store.live().filter(t => dueState(t) === 'over').length;
   F('overChip').hidden = !overN; F('overChip').textContent = `${overN} te laat`;
   if (comp.open && settings.collapsed[comp.status]) settings.collapsed[comp.status] = false;
@@ -967,8 +1118,12 @@ function setField(id, patch, what, msg){
   commit(t, what, msg);
 }
 function setStatus(id, k){
-  const t = Store.get(id); if (!t || t.status === k) return;
-  setField(id, {status:k, completedAt: k === 'done' ? nowIso() : null}, `Status: ${statusLabel(k)}`, k === 'done' ? `Klaar: ${t.patientNr || typeLabel(t)}` : `Status: ${statusLabel(k)}`);
+  const cur = Store.get(id); if (!cur || cur.status === k) return;
+  const t = clone(cur);
+  t.status = k; t.completedAt = k === 'done' ? nowIso() : null;
+  if (k === 'done') snapshotLots(t);
+  commit(t, `Status: ${statusLabel(k)}`, k === 'done' ? `Klaar: ${t.patientNr || typeLabel(t)}` : `Status: ${statusLabel(k)}`);
+  if (k === 'done' && t.lotsMissing && t.lotsMissing.length && isAdmin()) askLots(t.id);
 }
 
 document.addEventListener('click', e => {
@@ -1004,9 +1159,7 @@ function shadeChipsHtml(name){
     + `<label class="schip"><input type="radio" name="${name}" value="custom"><i style="background:repeating-linear-gradient(45deg,#ccc 0 3px,#fff 3px 6px)"></i>Anders</label>`;
 }
 F('cTypes').innerHTML = typeChipsHtml('ctype');
-F('cShades').innerHTML = shadeChipsHtml('cshade');
 F('fTypes').innerHTML = typeChipsHtml('ftype');
-F('fShades').innerHTML = shadeChipsHtml('fshade');
 F('fStatus').innerHTML = STATUSES.map(s => `<label><input type="radio" name="fstatus" value="${s.k}">${statusIcon(s.k)}${s.label}</label>`).join('');
 const timeOpts = '<option value="">Geen tijd (einde dag)</option>' + TIMES.map(t => `<option value="${t}">${t}</option>`).join('');
 const assignOpts = () => `<option value="eng">${esc(personName('eng'))}</option><option value="pap">${esc(personName('pap'))}</option><option value="">Niemand</option>`;
@@ -1015,21 +1168,158 @@ const radioVal = (root, name) => (root.querySelector(`input[name="${name}"]:chec
 const setRadio = (root, name, v) => root.querySelectorAll(`input[name="${name}"]`).forEach(r => r.checked = r.value === v);
 function ensureOption(sel, val){ if (val && ![...sel.options].some(o => o.value === val)){ const o = document.createElement('option'); o.value = val; o.textContent = val; sel.appendChild(o); } sel.value = val; }
 
-/* Patiëntenzoeker: klik = laatst gebruikte patiënten, typen = filteren op nummer of naam.
-   Pijltjes kiezen, Enter of Tab neemt over, Esc sluit. */
+/* ---------- opdrachtdetails per type ----------
+   Afdruklepels en pasprotheses: meerdere patiënten, elk met boven/onder/beide.
+   Base en immediaat: boven/onder/beide, per boog volledig of partieel; base per boog incl. uitsparing steg.
+   Steg: normaal of gesplitst (vanaf 4 implantaten) en aantal implantaten. Scannen: incl. ontwerp steg. */
+function seg(field, val, opts){
+  return `<div class="dseg" data-field="${field}" role="group">${opts.map(([v,l,dis]) => `<button type="button" data-v="${v}" aria-pressed="${String(v) === String(val)}"${dis ? ' disabled' : ''}>${l}</button>`).join('')}</div>`;
+}
+const ARCH_OPTS = [['boven','Boven'],['onder','Onder'],['beide','Beide']];
+const ARCH_LBL = {boven:'Boven', onder:'Onder'};
+const archOf = p => p.boven && p.onder ? 'beide' : p.boven ? 'boven' : p.onder ? 'onder' : '';
+function ptRowHtml(p, multi){
+  return `<div class="pt-row">
+    <div class="pt-f"><span class="mini">Patiëntnummer</span><input type="text" class="pt-nr nr-input" aria-label="Patiëntnummer" value="${esc(p.nr||'')}" autocomplete="off" spellcheck="false"></div>
+    <div class="pt-f grow"><span class="mini">Patiëntnaam</span><input type="text" class="pt-name" aria-label="Patiëntnaam" value="${esc(p.name||'')}" autocomplete="off"></div>
+    ${multi ? `<div class="pt-f"><span class="mini">Boog</span>${seg('arch', archOf(p), ARCH_OPTS)}</div><button type="button" class="pt-rm" aria-label="Patiënt verwijderen" title="Patiënt verwijderen">×</button>` : ''}
+  </div>`;
+}
+function archRowHtml(type, a, x){
+  x = x || {};
+  return `<div class="arch-row" data-arch="${a}"><b>${ARCH_LBL[a]}</b>
+    ${seg('partial', x.partial ? 'partieel' : 'volledig', [['volledig','Volledig'],['partieel','Partieel']])}
+    ${type === 'base' ? `<label class="chk"><input type="checkbox" class="d-steg"${x.steg ? ' checked' : ''}> Incl. uitsparing steg</label>
+      <span class="d-stegkind"${x.steg ? '' : ' hidden'}>${seg('stegkind', x.stegKind || 'nieuw', [['nieuw','Nieuwe steg'],['bestaand','Bestaande steg']])}</span>` : ''}
+  </div>`;
+}
+function shadeHtml(pfx, d){
+  return `<div class="dsec"><span class="mini">Tandkleur</span><div class="shade-row"><div class="shade-grid">${SHADES.map(([s,c]) => `<label class="schip"><input type="radio" name="${pfx}shade" value="${s}"${d.shade === s ? ' checked' : ''}><i style="background:${c}"></i>${s}</label>`).join('')}<label class="schip"><input type="radio" name="${pfx}shade" value="custom"${d.shade === 'custom' ? ' checked' : ''}><i style="background:repeating-linear-gradient(45deg,#ccc 0 3px,#fff 3px 6px)"></i>Anders</label></div><input type="text" class="d-shadecustom" aria-label="Andere tandkleur" placeholder="Bijv. B2 of 2M2" value="${esc(d.shadeCustom||'')}"${d.shade === 'custom' ? '' : ' hidden'} autocomplete="off"></div></div>`;
+}
+function detailsHtml(type, d, pfx){
+  d = d || {};
+  if (!type) return '';
+  if (type === 'anders') return `<div class="dsec"><span class="mini">Omschrijving</span><input type="text" class="d-custom" aria-label="Omschrijving" placeholder="Bijv. modellen ophalen" value="${esc(d.typeCustom||'')}" autocomplete="off"></div>`;
+  const multi = MULTI.has(type);
+  const pts = (multi && d.patients && d.patients.length) ? d.patients : [{nr:d.patientNr || '', name:d.patientName || ''}];
+  let h = `<div class="dsec"><div class="pt-rows">${(multi ? pts : pts.slice(0,1)).map(p => ptRowHtml(p, multi)).join('')}</div>${multi ? '<button type="button" class="btn ghost sm d-addpt">+ Patiënt toevoegen</button>' : ''}</div>`;
+  if (ARCH_TYPES.has(type)){
+    const ar = d.arches || {};
+    const sel = ar.boven && ar.onder ? 'beide' : ar.boven ? 'boven' : ar.onder ? 'onder' : '';
+    h += `<div class="dsec d-arches"><span class="mini">Welke boog</span>${seg('archsel', sel, ARCH_OPTS)}<div class="arch-rows">${['boven','onder'].filter(a => sel === 'beide' || sel === a).map(a => archRowHtml(type, a, ar[a])).join('')}</div></div>`;
+  }
+  if (type === 'imm') h += shadeHtml(pfx, d);
+  if (type === 'steg'){
+    const s = d.steg || {};
+    h += `<div class="dsec"><div class="steg-grid"><div><span class="mini">Type steg</span>${seg('stegtype', s.split ? 'gesplitst' : 'normaal', [['normaal','Normaal'],['gesplitst','Gesplitst', (s.implants || 0) < 4]])}</div><div><span class="mini">Aantal implantaten</span>${seg('implants', s.implants || '', [2,3,4,5,6].map(n => [n, String(n)]))}</div></div><div class="hint">Gesplitst kan vanaf 4 implantaten.</div></div>`;
+  }
+  if (type === 'scan') h += `<label class="scanbig"><input type="checkbox" class="d-scansteg"${d.scanSteg ? ' checked' : ''}> INCL. ONTWERP STEG</label>`;
+  return h;
+}
+function segVal(root, field){ const b = root.querySelector(`.dseg[data-field="${field}"] button[aria-pressed="true"]`); return b ? b.dataset.v : ''; }
+function readArchRow(row){ return {partial: segVal(row,'partial') === 'partieel', steg: !!(row.querySelector('.d-steg') || {}).checked, stegKind: segVal(row,'stegkind') || 'nieuw'}; }
+function readDetails(root, type){
+  const d = {}, errs = [];
+  if (type === 'anders'){
+    d.typeCustom = (root.querySelector('.d-custom') || {value:''}).value.trim();
+    if (!d.typeCustom) errs.push('Vul een omschrijving in bij "Anders".');
+    return {d, errs};
+  }
+  const rows = [...root.querySelectorAll('.pt-row')].map(r => ({nr:r.querySelector('.pt-nr').value.trim(), name:r.querySelector('.pt-name').value.trim(), arch:segVal(r,'arch')}));
+  if (MULTI.has(type)){
+    const filled = rows.filter(r => r.nr || r.name);
+    if (!filled.length) errs.push('Vul minstens één patiënt in.');
+    if (filled.some(r => !r.arch)) errs.push('Kies bij elke patiënt boven, onder of beide.');
+    d.patients = filled.map(r => ({nr:r.nr, name:r.name, boven:r.arch === 'boven' || r.arch === 'beide', onder:r.arch === 'onder' || r.arch === 'beide'}));
+    d.patientNr = filled[0] ? filled[0].nr : ''; d.patientName = filled[0] ? filled[0].name : '';
+  } else {
+    d.patientNr = rows[0] ? rows[0].nr : ''; d.patientName = rows[0] ? rows[0].name : '';
+    if (!d.patientNr && !d.patientName) errs.push('Vul een patiëntnummer of naam in.');
+  }
+  if (ARCH_TYPES.has(type)){
+    d.arches = {};
+    root.querySelectorAll('.arch-row').forEach(r => {
+      const x = readArchRow(r);
+      if (type !== 'base'){ delete x.steg; delete x.stegKind; } else if (!x.steg) delete x.stegKind;
+      d.arches[r.dataset.arch] = x;
+    });
+    if (!Object.keys(d.arches).length) errs.push('Kies boven, onder of beide.');
+  }
+  if (type === 'imm'){
+    d.shade = (root.querySelector('input[type=radio]:checked') || {}).value || '';
+    d.shadeCustom = d.shade === 'custom' ? (root.querySelector('.d-shadecustom') || {value:''}).value.trim() : '';
+    if (!d.shade) errs.push('Kies een tandkleur.'); else if (d.shade === 'custom' && !d.shadeCustom) errs.push('Vul de andere tandkleur in.');
+  }
+  if (type === 'steg'){
+    const n = +segVal(root,'implants') || 0;
+    d.steg = {implants:n, split:segVal(root,'stegtype') === 'gesplitst'};
+    if (!n) errs.push('Kies het aantal implantaten.');
+    if (d.steg.split && n < 4) errs.push('Een gesplitste steg kan pas vanaf 4 implantaten.');
+  }
+  if (type === 'scan') d.scanSteg = !!(root.querySelector('.d-scansteg') || {}).checked;
+  return {d, errs};
+}
+// Bewaart de ingevulde patiënt als je van type wisselt
+function peekDetails(root){
+  const r = root.querySelector('.pt-row');
+  return r ? {patientNr:r.querySelector('.pt-nr').value, patientName:r.querySelector('.pt-name').value} : {};
+}
+function showDetails(root, type, data){ root.dataset.type = type || ''; root.innerHTML = detailsHtml(type, data, root.dataset.pfx); }
+function setupDetails(root){
+  root.addEventListener('click', e => {
+    const b = e.target.closest('.dseg button');
+    if (b && !b.disabled){
+      const sg = b.parentElement, f = sg.dataset.field;
+      sg.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+      if (f === 'archsel'){
+        const wrap = sg.closest('.d-arches').querySelector('.arch-rows'), keep = {};
+        wrap.querySelectorAll('.arch-row').forEach(r => keep[r.dataset.arch] = readArchRow(r));
+        wrap.innerHTML = ['boven','onder'].filter(a => b.dataset.v === 'beide' || b.dataset.v === a).map(a => archRowHtml(root.dataset.type, a, keep[a])).join('');
+      }
+      if (f === 'implants'){
+        const n = +b.dataset.v, split = root.querySelector('.dseg[data-field="stegtype"] [data-v="gesplitst"]');
+        if (split){
+          split.disabled = n < 4;
+          if (n < 4 && split.getAttribute('aria-pressed') === 'true'){ split.setAttribute('aria-pressed','false'); root.querySelector('.dseg[data-field="stegtype"] [data-v="normaal"]').setAttribute('aria-pressed','true'); }
+        }
+      }
+      return;
+    }
+    if (e.target.closest('.d-addpt')){
+      const rows = root.querySelector('.pt-rows');
+      rows.insertAdjacentHTML('beforeend', ptRowHtml({}, true));
+      rows.lastElementChild.querySelector('.pt-nr').focus();
+      return;
+    }
+    const rm = e.target.closest('.pt-rm');
+    if (rm){
+      const r = rm.closest('.pt-row');
+      if (root.querySelectorAll('.pt-row').length > 1) r.remove();
+      else { r.querySelector('.pt-nr').value = ''; r.querySelector('.pt-name').value = ''; }
+    }
+  });
+  root.addEventListener('change', e => {
+    if (e.target.matches('.d-steg')) e.target.closest('.arch-row').querySelector('.d-stegkind').hidden = !e.target.checked;
+    if (e.target.matches('input[type=radio]')){ const c = root.querySelector('.d-shadecustom'); if (c){ c.hidden = e.target.value !== 'custom'; if (!c.hidden) c.focus(); } }
+  });
+}
+setupDetails(F('cDetails')); setupDetails(F('fDetails'));
+
+/* Patiëntenzoeker: werkt op elk patiëntnummer- en naamveld (ook extra patiëntregels).
+   Klik = laatst gebruikte patiënten, typen = filteren op nummer of naam. Pijltjes, Enter/Tab, Esc. */
 function relDays(iso){ if (!iso) return ''; const n = daysBetween(ymd(new Date(iso)), todayStr()); return n <= 0 ? 'vandaag' : n === 1 ? 'gisteren' : n < 30 ? `${n} dagen geleden` : shortDate(iso); }
 function markStart(text, q){ const t = String(text || ''); if (!q) return esc(t); const i = t.toLowerCase().indexOf(q.toLowerCase()); return i < 0 ? esc(t) : esc(t.slice(0,i)) + '<mark>' + esc(t.slice(i, i + q.length)) + '</mark>' + esc(t.slice(i + q.length)); }
-function patientPicker(nrEl, nameEl){
+const Picker = (() => {
   const box = document.createElement('div');
   box.className = 'ac-list'; box.hidden = true; box.setAttribute('role','listbox');
-  nrEl.closest('form').appendChild(box);
-  let items = [], hi = -1, src = nrEl;
+  let items = [], hi = -1, src = null, row = null;
+  const nrEl = () => row.querySelector('.pt-nr'), nameEl = () => row.querySelector('.pt-name');
+  const isPt = el => el && el.matches && el.matches('.pt-nr, .pt-name');
   function draw(){
-    const q = src.value.trim();
-    const exact = q && Patients.map[q];
+    const q = src.value.trim(), isNr = src === nrEl(), exact = q && Patients.map[q];
     box.innerHTML = `<div class="ac-head">${q ? 'Gevonden' : 'Laatst gebruikt'}</div>`
-      + items.map((p,i) => `<button type="button" tabindex="-1" role="option" class="ac-item${i===hi?' hi':''}" data-i="${i}" aria-selected="${i===hi}"><b>${markStart(p.nr, src === nrEl ? q : '')}</b><span>${markStart(p.name || '—', src === nameEl ? q : '')}</span><small>${relDays(p.lastUsedAt)}</small></button>`).join('')
-      + (src === nrEl && q && !exact ? `<div class="ac-new">${items.length ? 'Niet in de lijst? ' : ''}<b>${esc(q)}</b> wordt bij opslaan als nieuwe patiënt bewaard.</div>` : '');
+      + items.map((p,i) => `<button type="button" tabindex="-1" role="option" class="ac-item${i === hi ? ' hi' : ''}" data-i="${i}" aria-selected="${i === hi}"><b>${markStart(p.nr, isNr ? q : '')}</b><span>${markStart(p.name || '—', isNr ? '' : q)}</span><small>${relDays(p.lastUsedAt)}</small></button>`).join('')
+      + (isNr && q && !exact ? `<div class="ac-new">${items.length ? 'Niet in de lijst? ' : ''}<b>${esc(q)}</b> wordt bij opslaan als nieuwe patiënt bewaard.</div>` : '');
   }
   function place(){
     const r = src.getBoundingClientRect(), w = Math.max(r.width, Math.min(340, innerWidth - 16));
@@ -1038,62 +1328,85 @@ function patientPicker(nrEl, nameEl){
     const h = box.offsetHeight, below = innerHeight - r.bottom;
     box.style.top = (below < h + 12 && r.top > below ? r.top - h - 4 : r.bottom + 4) + 'px';
   }
-  function open(from){
-    src = from || src;
-    const q = src.value.trim();
+  function open(el){
+    src = el; row = el.closest('.pt-row');
+    const host = el.closest('dialog') || document.body;
+    if (box.parentNode !== host) host.appendChild(box);
+    const q = src.value.trim(), isNr = src === nrEl();
     items = Patients.search(q);
-    if (!items.length && !(src === nrEl && q)){ close(); return; }
+    if (!items.length && !(isNr && q)){ close(); return; }
     hi = q && items.length ? 0 : -1;
     box.hidden = false; draw(); place();
   }
   function close(){ box.hidden = true; hi = -1; }
   function pick(p, keepFocus){
-    nrEl.value = p.nr; nameEl.value = p.name || '';
+    const wasNr = src === nrEl();
+    nrEl().value = p.nr; nameEl().value = p.name || '';
     close();
-    if (!keepFocus) (src === nrEl ? nameEl : nrEl).focus();
+    if (!keepFocus) (wasNr ? nameEl() : nrEl()).focus();
   }
-  for (const el of [nrEl, nameEl]){
-    el.addEventListener('focus', () => open(el));
-    el.addEventListener('input', () => {
-      open(el);
-      // Exact bekend nummer getypt: naam meteen invullen
-      if (el === nrEl){ const p = Patients.map[nrEl.value.trim()]; if (p && !nameEl.value.trim()) nameEl.value = p.name; }
-    });
-    el.addEventListener('blur', () => setTimeout(() => { if (document.activeElement !== nrEl && document.activeElement !== nameEl) close(); }, 120));
-    el.addEventListener('keydown', e => {
-      if (box.hidden) return;
-      if (e.key === 'ArrowDown' && items.length){ e.preventDefault(); hi = (hi + 1) % items.length; draw(); }
-      else if (e.key === 'ArrowUp' && items.length){ e.preventDefault(); hi = hi <= 0 ? items.length - 1 : hi - 1; draw(); }
-      else if (e.key === 'Enter' && hi >= 0){ e.preventDefault(); e.stopPropagation(); pick(items[hi]); }
-      else if (e.key === 'Tab' && hi >= 0 && el.value.trim() && !e.shiftKey){ pick(items[hi], true); }
-      else if (e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); close(); }
-    });
-  }
+  document.addEventListener('focusin', e => { if (isPt(e.target)) open(e.target); });
+  document.addEventListener('input', e => {
+    if (!isPt(e.target)) return;
+    open(e.target);
+    if (e.target.matches('.pt-nr')){ const p = Patients.map[e.target.value.trim()], nm = e.target.closest('.pt-row').querySelector('.pt-name'); if (p && !nm.value.trim()) nm.value = p.name; }
+  });
+  document.addEventListener('focusout', e => { if (e.target === src) setTimeout(() => { if (!row || !row.contains(document.activeElement)) close(); }, 120); });
+  document.addEventListener('keydown', e => {
+    if (box.hidden || e.target !== src) return;
+    if (e.key === 'ArrowDown' && items.length){ e.preventDefault(); hi = (hi + 1) % items.length; draw(); }
+    else if (e.key === 'ArrowUp' && items.length){ e.preventDefault(); hi = hi <= 0 ? items.length - 1 : hi - 1; draw(); }
+    else if (e.key === 'Enter' && hi >= 0){ e.preventDefault(); e.stopPropagation(); pick(items[hi]); }
+    else if (e.key === 'Tab' && hi >= 0 && src.value.trim() && !e.shiftKey){ pick(items[hi], true); }
+    else if (e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); close(); }
+  }, true);
   box.addEventListener('pointerdown', e => { e.preventDefault(); const b = e.target.closest('.ac-item'); if (b) pick(items[+b.dataset.i]); });
-  document.addEventListener('scroll', () => { if (!box.hidden) place(); }, true);
-  window.addEventListener('resize', () => { if (!box.hidden) place(); });
+  document.addEventListener('scroll', () => { if (!box.hidden && src) place(); }, true);
+  window.addEventListener('resize', () => { if (!box.hidden && src) place(); });
   return {close};
-}
-const pickerC = patientPicker(F('cNr'), F('cName'));
-const pickerF = patientPicker(F('fNr'), F('fName'));
-editor.addEventListener('close', () => pickerF.close());
+})();
+editor.addEventListener('close', () => Picker.close());
 
-function validate({type, custom, shade, shadeCustom, nr, name, date}){
+/* ---------- lotnummers vastleggen bij Klaar ---------- */
+function snapshotLots(t){
+  const lots = {}, missing = [];
+  for (const m of lotNeeds(t)){ const l = Lots.current(m); if (l) lots[m] = l; else missing.push(m); }
+  t.lots = lots; t.lotsMissing = missing;
+}
+let lotAskId = null;
+function askLots(id){
+  const t = Store.get(id); if (!t || !t.lotsMissing || !t.lotsMissing.length) return;
+  lotAskId = id;
+  F('lotAskTxt').textContent = `${typeLabel(t)}${t.patientNr ? ' · ' + t.patientNr : ''}${t.patientName ? ' ' + t.patientName : ''}`;
+  F('lotAskFields').innerHTML = t.lotsMissing.map(m => `<div><label class="lbl" for="la_${esc(m)}">${esc(lotMaterialLabel(m))}</label><input type="text" id="la_${esc(m)}" data-m="${esc(m)}" list="ll_${esc(m)}" autocomplete="off"><datalist id="ll_${esc(m)}">${Lots.history(m).map(r => `<option value="${esc(r.lot)}">`).join('')}</datalist></div>`).join('');
+  F('lotAskDlg').showModal();
+  setTimeout(() => { const i = F('lotAskFields').querySelector('input'); if (i) i.focus(); }, 30);
+}
+F('lotAskForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const t = clone(Store.get(lotAskId)); if (!t) { F('lotAskDlg').close(); return; }
+  t.lots = t.lots || {};
+  for (const i of F('lotAskFields').querySelectorAll('input')){
+    const v = i.value.trim(); if (!v) continue;
+    t.lots[i.dataset.m] = v; await Lots.activate(i.dataset.m, v);
+  }
+  t.lotsMissing = lotNeeds(t).filter(m => !t.lots[m]);
+  F('lotAskDlg').close();
+  commit(t, 'Lotnummer aangevuld', 'Lotnummer opgeslagen');
+});
+
+function validateBase(type, date){
   const errs = [];
   if (!type) errs.push('Kies een opdrachttype.');
-  if (type === 'anders' && !custom) errs.push('Vul een omschrijving in bij "Anders".');
-  if (type === 'imm'){ if (!shade) errs.push('Kies een tandkleur.'); else if (shade === 'custom' && !shadeCustom) errs.push('Vul de andere tandkleur in.'); }
-  if (type && type !== 'anders' && !nr && !name) errs.push('Vul een patiëntnummer of naam in.');
   if (!date) errs.push('Kies op welke dag het klaar moet zijn.');
   return errs;
 }
+const TYPE_FIELDS = ['typeCustom','shade','shadeCustom','patientNr','patientName','patients','arches','steg','scanSteg'];
 
 /* ---------- aanmaakblok ---------- */
 function syncComposer(){
-  const type = radioVal(composer,'ctype'), shade = radioVal(composer,'cshade');
-  F('cCustom').hidden = type !== 'anders';
-  F('cShadeRow').hidden = type !== 'imm';
-  F('cShadeCustom').hidden = shade !== 'custom';
+  const type = radioVal(composer,'ctype'), root = F('cDetails');
+  if ((root.dataset.type || '') !== type) showDetails(root, type, peekDetails(root));
   F('cDays').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.d === F('cDate').value)));
 }
 function openComposer(o){
@@ -1104,6 +1417,7 @@ function openComposer(o){
   F('cStatusLbl').className = `spill s-${s.k}`; F('cStatusLbl').innerHTML = `<i></i>${s.label}`;
   if (!wasOpen || o.date){
     composer.reset();
+    showDetails(F('cDetails'), '', {});
     F('cTime').innerHTML = timeOpts; F('cAssignee').innerHTML = assignOpts(); F('cPrio').innerHTML = prioOpts;
     F('cDate').value = o.date || nextWorkday();
     ensureOption(F('cTime'), o.time !== undefined ? o.time : settings.lastTime);
@@ -1112,7 +1426,6 @@ function openComposer(o){
   }
   F('cDays').innerHTML = days().slice(0,5).map(d => `<button type="button" data-d="${d}" title="${fmtDay(d)}">${DOW[dowIdx(parseYmd(d))]}</button>`).join('');
   F('cErr').hidden = true;
-
   renderList(); syncComposer();
   requestAnimationFrame(() => {
     composer.scrollIntoView({block:'nearest', behavior:'smooth'});
@@ -1120,7 +1433,7 @@ function openComposer(o){
     first.focus({preventScroll:true});
   });
 }
-function closeComposer(){ comp.open = false; renderList(); }
+function closeComposer(){ comp.open = false; Picker.close(); renderList(); }
 composer.addEventListener('change', syncComposer);
 F('cDate').addEventListener('input', syncComposer);
 F('cDays').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ F('cDate').value = b.dataset.d; syncComposer(); } });
@@ -1128,16 +1441,17 @@ F('cCancel').addEventListener('click', closeComposer);
 composer.addEventListener('keydown', e => { if (e.key === 'Escape'){ e.preventDefault(); closeComposer(); } if (e.key === 'Enter' && e.target.matches('input[type=radio]')){ e.preventDefault(); composer.requestSubmit(); } });
 composer.addEventListener('submit', e => {
   e.preventDefault();
-  const v = {type:radioVal(composer,'ctype'), custom:F('cCustom').value.trim(), shade:radioVal(composer,'cshade'), shadeCustom:F('cShadeCustom').value.trim(),
-    nr:F('cNr').value.trim(), name:F('cName').value.trim(), date:F('cDate').value};
-  const errs = validate(v);
+  const type = radioVal(composer,'ctype'), date = F('cDate').value;
+  const errs = validateBase(type, date);
+  const det = type ? readDetails(F('cDetails'), type) : {d:{}, errs:[]};
+  errs.push(...det.errs);
   if (errs.length){ F('cErr').textContent = errs.join(' '); F('cErr').hidden = false; return; }
   const now = nowIso();
-  const t = {id:uid(), createdAt:now, createdBy:settings.me, history:[], status:comp.status,
-    type:v.type, typeCustom: v.type === 'anders' ? v.custom : '', shade: v.type === 'imm' ? v.shade : '', shadeCustom: v.type === 'imm' && v.shade === 'custom' ? v.shadeCustom : '',
-    patientNr:v.nr, patientName:v.name, dueDate:v.date, dueTime:F('cTime').value, assignee:F('cAssignee').value, priority:F('cPrio').value, note:''};
+  const t = Object.assign({id:uid(), createdAt:now, createdBy:settings.me, history:[], status:comp.status, type,
+    typeCustom:'', shade:'', shadeCustom:'', patientNr:'', patientName:'',
+    dueDate:date, dueTime:F('cTime').value, assignee:F('cAssignee').value, priority:F('cPrio').value, note:''}, det.d);
   settings.lastTime = t.dueTime; settings.lastAssignee = t.assignee; saveSettings();
-  comp.open = false;
+  comp.open = false; Picker.close();
   if (!days().includes(t.dueDate)) weekStart = mondayOf(parseYmd(t.dueDate));
   commit(t, 'Aangemaakt', `Opdracht toegevoegd: klaar ${dueLabel(t).toLowerCase()}`);
 });
@@ -1145,52 +1459,56 @@ composer.addEventListener('submit', e => {
 /* ---------- bewerken ---------- */
 let editingId = null, delArmed = 0;
 function syncEditor(){
-  const type = radioVal(edForm,'ftype'), shade = radioVal(edForm,'fshade');
-  F('fCustomWrap').hidden = type !== 'anders';
-  F('fShadeWrap').hidden = type !== 'imm';
-  F('fShadeCustom').hidden = shade !== 'custom';
+  const type = radioVal(edForm,'ftype'), root = F('fDetails');
+  if ((root.dataset.type || '') !== type) showDetails(root, type, peekDetails(root));
 }
-edForm.addEventListener('change', syncEditor);
+edForm.addEventListener('change', e => { if (e.target.name === 'ftype') syncEditor(); });
 function openEditor(id){
   const t = Store.get(id); if (!t) return;
   closeMenu();
   editingId = id; delArmed = 0;
   F('edTitle').textContent = t.deleted ? 'Verwijderde opdracht' : (t.patientNr ? `${typeLabel(t)} · ${t.patientNr}` : typeLabel(t));
-  setRadio(edForm,'fstatus', t.status); setRadio(edForm,'ftype', t.type); setRadio(edForm,'fshade', t.shade || '');
-  F('fCustom').value = t.typeCustom || ''; F('fShadeCustom').value = t.shadeCustom || '';
-  F('fNr').value = t.patientNr || ''; F('fName').value = t.patientName || '';
+  setRadio(edForm,'fstatus', t.status); setRadio(edForm,'ftype', t.type);
+  showDetails(F('fDetails'), t.type, t);
   F('fDate').value = t.dueDate || '';
   F('fTime').innerHTML = timeOpts; ensureOption(F('fTime'), t.dueTime || '');
   F('fAssignee').innerHTML = assignOpts(); F('fAssignee').value = t.assignee || '';
   F('fPrio').innerHTML = prioOpts; F('fPrio').value = t.priority || '';
   F('fNote').value = t.note || '';
   F('fErr').hidden = true;
+  const lotKeys = t.lots ? Object.keys(t.lots) : [];
+  F('fLots').hidden = !(lotKeys.length || (t.lotsMissing && t.lotsMissing.length));
+  F('fLots').innerHTML = `<span class="mini">Lotnummers vastgelegd bij Klaar</span>` + lotKeys.map(m => `<span class="chip">${esc(lotMaterialLabel(m))}: <b class="mono">${esc(t.lots[m])}</b></span>`).join('')
+    + (t.lotsMissing || []).map(m => `<span class="chip warnchip">${esc(lotMaterialLabel(m))}: ontbreekt</span>`).join('');
   const del = F('delBtn'); del.classList.remove('armed'); del.textContent = t.deleted ? 'Terugzetten' : 'Verwijderen';
   let m = `Aangemaakt <b>${fmtStamp(t.createdAt)}</b> door <b>${esc(personName(t.createdBy))}</b>`;
   if (t.updatedAt && t.updatedAt !== t.createdAt) m += `<br>Laatst gewijzigd ${fmtStamp(t.updatedAt)}`;
   if (t.completedAt) m += `<br>Klaar gemeld ${fmtStamp(t.completedAt)}`;
+  if (t.invoiceId && isAdmin()) m += `<br>Staat op een factuur`;
   if (t.example) m += '<br>Voorbeeldopdracht';
   F('edMeta').innerHTML = m;
   F('histList').innerHTML = (t.history || []).slice().reverse().map(h => `<li><span>${fmtStampShort(h.at)}</span>${esc(h.what)} · ${esc(personName(h.by))}</li>`).join('') || '<li>Geen geschiedenis</li>';
-  syncEditor();
   editor.showModal();
 }
 edForm.addEventListener('submit', e => {
   e.preventDefault();
-  const v = {type:radioVal(edForm,'ftype'), custom:F('fCustom').value.trim(), shade:radioVal(edForm,'fshade'), shadeCustom:F('fShadeCustom').value.trim(),
-    nr:F('fNr').value.trim(), name:F('fName').value.trim(), date:F('fDate').value};
-  const errs = validate(v);
+  const type = radioVal(edForm,'ftype'), date = F('fDate').value;
+  const errs = validateBase(type, date);
+  const det = type ? readDetails(F('fDetails'), type) : {d:{}, errs:[]};
+  errs.push(...det.errs);
   if (errs.length){ F('fErr').textContent = errs.join(' '); F('fErr').hidden = false; return; }
   const before = Store.get(editingId), t = clone(before);
   const status = radioVal(edForm,'fstatus') || t.status;
-  Object.assign(t, {type:v.type, typeCustom: v.type === 'anders' ? v.custom : '', shade: v.type === 'imm' ? v.shade : '', shadeCustom: v.type === 'imm' && v.shade === 'custom' ? v.shadeCustom : '',
-    patientNr:v.nr, patientName:v.name, dueDate:v.date, dueTime:F('fTime').value, assignee:F('fAssignee').value, priority:F('fPrio').value, note:F('fNote').value.trim(), status});
-  if (status !== before.status) t.completedAt = status === 'done' ? nowIso() : null;
+  TYPE_FIELDS.forEach(k => delete t[k]);
+  Object.assign(t, {typeCustom:'', shade:'', shadeCustom:'', patientNr:'', patientName:''}, det.d,
+    {type, dueDate:date, dueTime:F('fTime').value, assignee:F('fAssignee').value, priority:F('fPrio').value, note:F('fNote').value.trim(), status});
+  if (status !== before.status){ t.completedAt = status === 'done' ? nowIso() : null; if (status === 'done') snapshotLots(t); }
   const ch = [...new Set(Object.keys(FIELD_NAMES).filter(k => JSON.stringify(before[k] ?? '') !== JSON.stringify(t[k] ?? '')).map(k => FIELD_NAMES[k]))];
   editor.close();
   if (!ch.length) return;
   if (t.dueDate && !days().includes(t.dueDate)) weekStart = mondayOf(parseYmd(t.dueDate));
   commit(t, 'Gewijzigd: ' + ch.join(', '), 'Opdracht bijgewerkt');
+  if (status === 'done' && before.status !== 'done' && t.lotsMissing && t.lotsMissing.length && isAdmin()) askLots(t.id);
 });
 F('delBtn').addEventListener('click', () => {
   const t = clone(Store.get(editingId)); if (!t) return;
@@ -1309,7 +1627,7 @@ let arcFilter = 'all';
 function renderArchive(){
   const q = F('arcSearch').value.trim().toLowerCase();
   let list = Store.tasks.filter(t => arcFilter === 'deleted' ? !!t.deleted : !t.deleted && (arcFilter === 'all' || (arcFilter === 'done' ? t.status === 'done' : t.status !== 'done')));
-  if (q) list = list.filter(t => [t.patientNr, t.patientName, typeLabel(t), shadeLabel(t), t.note].join(' ').toLowerCase().includes(q));
+  if (q) list = list.filter(t => searchText(t).includes(q));
   list.sort((a,b) => (b.createdAt||'').localeCompare(a.createdAt||''));
   F('arcCount').textContent = `${list.length} van ${Store.tasks.length}`;
   F('arcBody').innerHTML = list.length ? list.map(t => `<tr data-id="${esc(t.id)}" tabindex="0">
@@ -1381,7 +1699,7 @@ F('todayBtn').addEventListener('click', () => { weekStart = mondayOf(new Date())
 F('newBtn').addEventListener('click', () => openComposer({status:'todo'}));
 F('clearExamples').addEventListener('click', () => { Store.removeHard(t => t.example); toast('Voorbeelden gewist. De planner is leeg en klaar voor gebruik.'); });
 document.addEventListener('keydown', e => {
-  if (document.querySelector('dialog[open]') || /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (currentView !== 'planner' || document.querySelector('dialog[open]') || /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) || e.ctrlKey || e.metaKey || e.altKey) return;
   if (e.key === 'Escape') closeMenu();
   else if (e.key === 'n' || e.key === 'N'){ e.preventDefault(); openComposer({status:'todo'}); }
   else if (e.key === 'ArrowLeft' && !e.target.closest('.lrow, .acard')){ weekStart = addDays(weekStart,-7); render(); }
@@ -1432,15 +1750,75 @@ function fixScanTypes(){
   }
 }
 
+/* ---------- onderdelen: Planner / Facturatie / Lotnummers ---------- */
+let currentView = 'planner';
+function applyRole(){
+  const admin = isAdmin();
+  F('viewNav').hidden = !admin;
+  if (!admin && currentView !== 'planner') showView('planner');
+}
+function showView(v){
+  currentView = v;
+  F('viewNav').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === v)));
+  F('work').hidden = v !== 'planner';
+  document.querySelector('.weeknav').hidden = v !== 'planner';
+  F('billingView').hidden = v !== 'billing';
+  F('lotsView').hidden = v !== 'lots';
+  closeMenu();
+  if (v === 'lots') renderLots();
+  window.dispatchEvent(new CustomEvent('lab:view', {detail:v}));
+}
+F('viewNav').addEventListener('click', e => { const b = e.target.closest('button[data-view]'); if (b) showView(b.dataset.view); });
+
+function renderLots(){
+  F('lotTable').innerHTML = `<div class="lt-row lt-head"><span>Materiaal</span><span>Actief lotnummer</span><span></span><span>Eerder gebruikt (klik = weer actief)</span></div>`
+    + Lots.materials().map(([m, label]) => {
+      const h = Lots.history(m), cur = h[0];
+      return `<form class="lt-row" data-m="${esc(m)}" novalidate>
+        <span class="lt-mat">${esc(label)}${cur ? `<small>actief sinds ${fmtStampShort(cur.activatedAt)}</small>` : '<small class="lt-empty">nog niet ingevuld</small>'}</span>
+        <input type="text" class="mono" value="${esc(cur ? cur.lot : '')}" aria-label="Lotnummer ${esc(label)}" autocomplete="off">
+        <button type="submit" class="btn ghost sm">Opslaan</button>
+        <span class="lt-hist">${h.slice(1, 7).map(r => `<button type="button" class="chip lt-old" data-lot="${esc(r.lot)}" title="Weer actief maken">${esc(r.lot)}</button>`).join('') || '<span class="muted">—</span>'}</span>
+      </form>`;
+    }).join('');
+}
+F('lotTable').addEventListener('submit', async e => {
+  e.preventDefault();
+  const f = e.target, m = f.dataset.m, v = f.querySelector('input').value.trim();
+  if (!v) return;
+  if (v === Lots.current(m)){ toast('Dit lotnummer is al actief'); return; }
+  await Lots.activate(m, v); renderLots(); toast(`${lotMaterialLabel(m)}: ${v} is nu actief`);
+});
+F('lotTable').addEventListener('click', async e => {
+  const b = e.target.closest('.lt-old'); if (!b) return;
+  const m = b.closest('.lt-row').dataset.m;
+  await Lots.activate(m, b.dataset.lot); renderLots(); toast(`${lotMaterialLabel(m)}: ${b.dataset.lot} is weer actief`);
+});
+F('lotAddForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const sh = F('lotAddShade').value.trim().toUpperCase(), lot = F('lotAddLot').value.trim();
+  if (!sh || !lot){ toast('Vul een tandkleur en een lotnummer in'); return; }
+  await Lots.activate('tand:' + sh, lot); F('lotAddShade').value = ''; F('lotAddLot').value = ''; renderLots();
+  toast(`Tandenboog ${sh}: ${lot} toegevoegd`);
+});
+
+// Voor facturen.js
+window.LabApp = {Store, Sync, Lots, Patients, settings, commit, toast, esc, F, isAdmin, typeLabel, shadeKey, shadeLabel, ptList, lotMaterialLabel, lotNeeds,
+  MULTI, ARCH_TYPES, TYPES, nowIso, uid, clone, todayStr, ymd, parseYmd, addDays, mondayOf, isoWeek, fmtDay, fmtStampShort, readLS, writeLS, ONLINE,
+  openEditor, showView, personName, MON, DOW, dowIdx, statusIcon, get currentView(){ return currentView; }};
+
 /* ---------- start ---------- */
 if (!Store.init() && !ONLINE.url) seedExamples();
 if (ONLINE.url) Store.tasks = Store.tasks.filter(t => !t.example);
 Patients.init();
+Lots.init();
+applyRole();
 if (!ONLINE.url) fixScanTypes();
 applySplit();
 render();
 Sync.start();
 })();
 </script>
+<script src="facturen.js"></script>
 </body>
 </html>
