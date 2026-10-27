@@ -1,0 +1,1294 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Labplanner</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+/* Layout: kopbalk; daaronder twee helften met een versleepbare scheiding.
+   Boven: week in dagkolommen, opdrachten gegroepeerd per eindtijd. Onder: takenlijst per status met aanmaakblok. */
+:root{
+  --bg:#edf1f4; --surface:#ffffff; --surface-2:#f4f7f9; --line:#d8dfe5; --line-soft:#e9eef1;
+  --fg:#14202b; --fg-2:#4a5866; --fg-3:#7b8794;
+  --accent:#1d5fd1; --accent-fg:#ffffff; --accent-soft:#e2ebfb;
+  --danger:#c0392b; --danger-soft:#fbe6e3; --warn:#a0650a; --warn-soft:#fbefd9; --ok:#1f7d55; --ok-soft:#dff2e8;
+  --s-busy:#2f6fe4; --s-todo:#d64545; --s-wait:#8a95a0; --s-done:#1f9d63;
+  --p-urgent:#d64545; --p-high:#e08a00; --p-normal:#2f6fe4; --p-low:#8a95a0;
+  --av-pap:#b4532a; --av-eng:#17806f;
+  --t-tryin:#6a4bc4; --t-tryin-bg:#ece7fb;
+  --t-base:#c0466a;  --t-base-bg:#fae3ea;
+  --t-imm:#9a6a0e;   --t-imm-bg:#f8edd6;
+  --t-steg:#3f5f78;  --t-steg-bg:#e1e8ee;
+  --t-lepel:#17806f; --t-lepel-bg:#d9f0eb;
+  --t-anders:#5b6772;--t-anders-bg:#e9ecef;
+  --shadow:0 1px 2px rgba(20,32,43,.06),0 8px 24px rgba(20,32,43,.10);
+  --f-display:'Bricolage Grotesque','Figtree',system-ui,sans-serif;
+  --f-ui:'Figtree',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --f-mono:'JetBrains Mono',ui-monospace,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0d1216; --surface:#151c22; --surface-2:#1a232a; --line:#2a353e; --line-soft:#1f2930;
+    --fg:#e4eaee; --fg-2:#a5b1bb; --fg-3:#73818c;
+    --accent:#6c9cff; --accent-fg:#0b1220; --accent-soft:#1b2a44;
+    --danger:#ff7a6b; --danger-soft:#3a1d1a; --warn:#f0b04a; --warn-soft:#3a2c14; --ok:#5ccf98; --ok-soft:#173326;
+    --s-busy:#4f8bff; --s-todo:#f06464; --s-wait:#7d8a96; --s-done:#3cc282;
+    --p-urgent:#f06464; --p-high:#f0a830; --p-normal:#4f8bff; --p-low:#7d8a96;
+    --av-pap:#d9784d; --av-eng:#3fb8a2;
+    --t-tryin:#b6a2ff; --t-tryin-bg:#272040;
+    --t-base:#ff8fb0;  --t-base-bg:#3a1f29;
+    --t-imm:#f1c46a;   --t-imm-bg:#342914;
+    --t-steg:#9fbad0;  --t-steg-bg:#1e2a34;
+    --t-lepel:#6fd8c4; --t-lepel-bg:#13302b;
+    --t-anders:#b1bcc6;--t-anders-bg:#242c33;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px rgba(0,0,0,.4);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0d1216; --surface:#151c22; --surface-2:#1a232a; --line:#2a353e; --line-soft:#1f2930;
+  --fg:#e4eaee; --fg-2:#a5b1bb; --fg-3:#73818c;
+  --accent:#6c9cff; --accent-fg:#0b1220; --accent-soft:#1b2a44;
+  --danger:#ff7a6b; --danger-soft:#3a1d1a; --warn:#f0b04a; --warn-soft:#3a2c14; --ok:#5ccf98; --ok-soft:#173326;
+  --s-busy:#4f8bff; --s-todo:#f06464; --s-wait:#7d8a96; --s-done:#3cc282;
+  --p-urgent:#f06464; --p-high:#f0a830; --p-normal:#4f8bff; --p-low:#7d8a96;
+  --av-pap:#d9784d; --av-eng:#3fb8a2;
+  --t-tryin:#b6a2ff; --t-tryin-bg:#272040;
+  --t-base:#ff8fb0;  --t-base-bg:#3a1f29;
+  --t-imm:#f1c46a;   --t-imm-bg:#342914;
+  --t-steg:#9fbad0;  --t-steg-bg:#1e2a34;
+  --t-lepel:#6fd8c4; --t-lepel-bg:#13302b;
+  --t-anders:#b1bcc6;--t-anders-bg:#242c33;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 28px rgba(0,0,0,.4);
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--fg);font:14px/1.4 var(--f-ui);-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit}
+[hidden]{display:none!important}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.t-tryin{--c:var(--t-tryin);--cb:var(--t-tryin-bg)}
+.t-base{--c:var(--t-base);--cb:var(--t-base-bg)}
+.t-imm{--c:var(--t-imm);--cb:var(--t-imm-bg)}
+.t-steg{--c:var(--t-steg);--cb:var(--t-steg-bg)}
+.t-lepel{--c:var(--t-lepel);--cb:var(--t-lepel-bg)}
+.t-anders{--c:var(--t-anders);--cb:var(--t-anders-bg)}
+.sw{width:10px;height:10px;border-radius:3px;background:var(--c);flex:none;display:inline-block}
+
+/* ---------- shell ---------- */
+.app{height:100%;display:flex;flex-direction:column}
+.topbar{display:flex;align-items:center;gap:10px 18px;flex-wrap:wrap;background:var(--surface);border-bottom:1px solid var(--line);
+  padding-block:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.brand{display:flex;align-items:center;gap:10px}
+.logo{width:34px;height:34px;border-radius:9px;background:var(--accent);color:var(--accent-fg);display:grid;place-items:center;flex:none}
+.brand-name{font:700 18px/1.1 var(--f-display);letter-spacing:-.01em}
+.brand-sub{font-size:12px;color:var(--fg-3)}
+.weeknav{display:flex;align-items:center;gap:6px}
+.weeklabel{display:flex;flex-direction:column;margin-left:8px}
+.weeklabel b{font:700 20px/1.1 var(--f-display);letter-spacing:-.01em}
+.weeklabel span{font-size:12.5px;color:var(--fg-2)}
+.top-actions{display:flex;align-items:center;gap:8px;margin-left:auto;flex-wrap:wrap}
+
+.btn{height:36px;padding:0 14px;border-radius:8px;border:1px solid transparent;font-weight:600;font-size:13.5px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;background:none}
+.btn.primary{background:var(--accent);color:var(--accent-fg)}
+.btn.primary:hover{filter:brightness(1.07)}
+.btn.ghost{border-color:var(--line);background:var(--surface)}
+.btn.ghost:hover{background:var(--surface-2)}
+.btn.sm{height:30px;padding:0 11px;font-size:12.5px}
+.btn.danger-ghost{color:var(--danger);padding:0 10px}
+.btn.danger-ghost:hover,.btn.danger-ghost.armed{background:var(--danger-soft)}
+.icon-btn{width:36px;height:36px;border-radius:8px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;cursor:pointer;color:var(--fg-2);flex:none;padding:0}
+.icon-btn:hover{background:var(--surface-2);color:var(--fg)}
+.icon-btn.bare{border-color:transparent}
+
+.seg{display:flex;align-items:center;background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:3px;gap:2px;flex-wrap:wrap}
+.seg>span{font-size:12px;color:var(--fg-3);padding:0 6px 0 4px}
+.seg button{border:0;background:none;height:28px;padding:0 10px;border-radius:6px;font-weight:600;font-size:13px;cursor:pointer;color:var(--fg-2)}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+
+.work{--topfr:1fr;--botfr:1fr;flex:1;min-height:0;display:grid;grid-template-rows:minmax(0,var(--topfr)) 14px minmax(0,var(--botfr));
+  padding-block:12px 14px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.splitter{cursor:row-resize;display:grid;place-items:center;touch-action:none}
+.splitter::before{content:"";width:56px;height:4px;border-radius:4px;background:var(--line)}
+.splitter:hover::before{background:var(--accent)}
+
+/* ---------- week ---------- */
+.week{display:grid;grid-template-columns:var(--cols);overflow-x:auto;overflow-y:hidden;background:var(--surface);border:1px solid var(--line);border-radius:12px;min-height:0;height:100%}
+.daycol{display:flex;flex-direction:column;min-width:0;min-height:0;border-left:1px solid var(--line-soft)}
+.daycol:first-child{border-left:0}
+.daycol.wkend{background:var(--surface-2)}
+.daycol.today{background:color-mix(in srgb,var(--accent) 5%,var(--surface))}
+.dc-head{display:flex;align-items:baseline;gap:6px;padding:9px 8px 8px 10px;border-bottom:1px solid var(--line);flex:none}
+.dh-dow{font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:var(--fg-3);font-weight:700}
+.dh-num{font:700 20px/1 var(--f-display)}
+.dh-mon{font-size:12px;color:var(--fg-3)}
+.daycol.today .dh-num{background:var(--accent);color:var(--accent-fg);border-radius:8px;padding:3px 6px;margin:-3px 0}
+.daycol.today .dh-dow{color:var(--accent)}
+.daycol.past .dc-head{opacity:.6}
+.dc-count{margin-left:auto;font-size:11.5px;font-weight:700;color:var(--fg-2);background:var(--surface-2);border:1px solid var(--line);border-radius:20px;padding:0 7px;align-self:center}
+.dc-add{align-self:center;width:24px;height:24px;border-radius:6px;border:0;background:none;color:var(--fg-3);cursor:pointer;display:grid;place-items:center;padding:0}
+.dc-count+.dc-add{margin-left:0}
+.dc-add:first-of-type{margin-left:auto}
+.dc-add:hover{background:var(--accent-soft);color:var(--accent)}
+.day-body{flex:1;min-height:0;overflow-y:auto;padding:10px 8px 14px;display:flex;flex-direction:column;gap:12px;cursor:copy;overscroll-behavior:contain}
+.dc-empty{color:var(--fg-3);font-size:12px;text-align:center;padding:14px 4px;border:1px dashed var(--line);border-radius:8px}
+.daycol.drop-over .day-body{background:color-mix(in srgb,var(--accent) 9%,transparent)}
+
+.tgroup{display:flex;flex-direction:column;gap:6px;border-radius:9px;padding:2px;margin:-2px}
+.tgroup.drop-over{outline:2px dashed var(--accent);outline-offset:2px;background:var(--accent-soft)}
+.tg-head{display:flex;align-items:center;gap:7px}
+.tg-time{font:600 12px var(--f-mono);background:var(--fg);color:var(--surface);border-radius:5px;padding:2px 7px}
+.tg-time.eod{background:var(--surface-2);color:var(--fg-2);border:1px solid var(--line);font-family:var(--f-ui);font-size:11.5px}
+.tgroup.over .tg-time{background:var(--danger);color:#fff;border-color:transparent}
+.tg-rule{flex:1;height:1px;background:var(--line)}
+.tg-n{font-size:11px;color:var(--fg-3);font-weight:600}
+
+.acard{position:relative;background:var(--cb);border:1px solid color-mix(in srgb,var(--c) 32%,transparent);border-radius:8px;padding:7px 8px 8px;
+  display:flex;flex-direction:column;gap:3px;cursor:grab;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;font-size:12.5px;min-width:0}
+.acard:hover,.acard:focus-visible{box-shadow:var(--shadow)}
+.ac-top{display:flex;align-items:center;gap:6px;min-width:0}
+.ac-type{flex:1;min-width:0;font-weight:700;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--c);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ac-pt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ac-pt b{font-weight:600;margin-right:4px}
+.ac-meta{display:flex;flex-wrap:wrap;gap:4px}
+.acard.done{opacity:.6}
+.acard.done .ac-pt{text-decoration:line-through}
+.acard.lifted,.lrow.lifted{opacity:.3}
+.ghost{position:fixed;left:0;top:0;z-index:1000;pointer-events:none;width:230px;box-shadow:0 14px 40px rgba(0,0,0,.28);opacity:.96}
+
+.chip{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;border-radius:5px;padding:1px 6px;background:var(--surface);border:1px solid var(--line);white-space:nowrap}
+.chip.shade{font-family:var(--f-mono)}
+.chip.shade i{width:9px;height:9px;border-radius:50%;border:1px solid rgba(0,0,0,.2)}
+
+.sdot{flex:none;width:22px;height:22px;border:0;background:none;padding:0;display:grid;place-items:center;cursor:pointer;border-radius:50%}
+.sdot:hover{background:color-mix(in srgb,var(--fg) 8%,transparent)}
+.sdot svg{display:block}
+.av{flex:none;min-width:22px;height:22px;padding:0 5px;border-radius:11px;display:grid;place-items:center;font:700 10px var(--f-ui);color:#fff;letter-spacing:.02em}
+.av.sm{min-width:18px;height:18px;padding:0 4px;font-size:9px}
+.av.none{padding:0;width:22px}
+.av.sm.none{width:18px}
+.av-pap{background:var(--av-pap)}
+.av-eng{background:var(--av-eng)}
+.av.none{border:1.5px dashed var(--fg-3);color:var(--fg-3);background:none}
+.icon-plain{border:0;background:none;padding:2px;border-radius:6px;cursor:pointer;display:inline-grid;place-items:center}
+.icon-plain:hover{background:var(--surface-2)}
+
+/* ---------- lijst ---------- */
+.listpanel{display:flex;flex-direction:column;min-height:0;height:100%;background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.list-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid var(--line-soft);flex:none}
+.list-bar h2{margin:0;font:700 17px/1 var(--f-display);margin-right:4px}
+.list-bar input{flex:1 1 200px;max-width:340px;height:34px;width:auto}
+.over-chip{font-size:12px;font-weight:700;color:var(--danger);background:var(--danger-soft);border-radius:20px;padding:3px 10px;border:0;cursor:pointer}
+.list-scroll{flex:1;min-height:0;overflow:auto;padding:4px 14px 18px;overscroll-behavior:contain}
+.list-inner{min-width:720px}
+.sgroup{margin-top:12px;border-radius:10px}
+.sgroup.drop-over{background:var(--accent-soft);outline:2px dashed var(--accent);outline-offset:2px}
+.sg-head{display:flex;align-items:center;gap:8px;height:34px}
+.sg-caret{width:22px;height:22px;border:0;background:none;color:var(--fg-3);cursor:pointer;display:grid;place-items:center;padding:0;border-radius:5px;transition:transform .15s}
+.sg-caret[aria-expanded="false"]{transform:rotate(-90deg)}
+.spill{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 9px 0 7px;border-radius:6px;font-weight:700;font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:#fff}
+.spill i{width:11px;height:11px;border-radius:50%;border:2px solid currentColor}
+.spill.s-busy{background:var(--s-busy)} .spill.s-busy i{border-style:solid;box-shadow:inset 0 0 0 2px var(--s-busy),inset 0 0 0 6px #fff}
+.spill.s-todo{background:var(--s-todo)} .spill.s-todo i{border-style:dashed}
+.spill.s-wait{background:var(--surface-2);color:var(--fg-2);border:1px solid var(--line)} .spill.s-wait i{border-style:dashed}
+.spill.s-done{background:var(--s-done)}
+.sg-n{font-size:12.5px;color:var(--fg-3);font-weight:600}
+.sg-add{width:24px;height:24px;border:0;background:none;color:var(--fg-3);border-radius:6px;cursor:pointer;display:grid;place-items:center;padding:0}
+.sg-add:hover{background:var(--surface-2);color:var(--fg)}
+.lcols{display:grid;grid-template-columns:30px minmax(260px,1fr) 64px 170px 74px 118px;align-items:center;gap:10px}
+.lhead{font-size:11.5px;color:var(--fg-3);padding:4px 8px 6px;border-bottom:1px solid var(--line)}
+.lrow{padding:6px 8px;border-bottom:1px solid var(--line-soft);cursor:pointer;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;min-height:42px}
+.lrow:hover,.lrow:focus-visible{background:var(--surface-2)}
+.lname{display:flex;align-items:center;gap:8px;min-width:0;overflow:hidden}
+.ltype{display:inline-flex;align-items:center;gap:6px;font-weight:700;color:var(--c);white-space:nowrap;font-size:13px}
+.lpt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
+.lpt b{font-weight:600;margin-right:3px}
+.lnote{color:var(--fg-3);display:inline-flex;flex:none}
+.lrow.done .lpt,.lrow.done .ltype{text-decoration:line-through;opacity:.65}
+.ldue{font-size:13px;white-space:nowrap}
+.ldue small{display:block;font-size:11.5px}
+.ldue.over{color:var(--danger);font-weight:600}
+.ldue.soon{color:var(--warn);font-weight:600}
+.lmade{font-size:12px;color:var(--fg-2);white-space:nowrap}
+.lmade small{display:block;color:var(--fg-3);font-size:11px}
+.add-row{display:block;width:100%;text-align:left;background:none;border:0;color:var(--fg-3);padding:9px 8px 9px 48px;cursor:pointer;font-size:13.5px;border-radius:6px}
+.add-row:hover{color:var(--fg);background:var(--surface-2)}
+.more{font-size:12.5px;color:var(--fg-3);margin:8px 0 0 48px}
+
+/* aanmaakblok */
+.composer{border:1.5px solid var(--accent);border-radius:12px;padding:12px 14px 12px;margin:8px 0 6px;background:var(--surface);box-shadow:var(--shadow);display:flex;flex-direction:column;gap:10px}
+.comp-title{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-3);display:flex;align-items:center;gap:8px}
+.tchips{display:flex;flex-wrap:wrap;gap:6px}
+.tchip{position:relative;display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 11px;border:1.5px solid var(--line);border-radius:8px;cursor:pointer;font-weight:600;font-size:13px;background:var(--surface)}
+.tchip input{position:absolute;opacity:0;pointer-events:none}
+.tchip:hover{border-color:color-mix(in srgb,var(--c) 55%,var(--line))}
+.tchip:has(input:checked){border-color:var(--c);background:var(--cb);box-shadow:inset 0 0 0 1px var(--c)}
+.tchip:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
+.cgrid{display:grid;grid-template-columns:1fr 1.5fr 1.25fr .85fr 1fr 1fr;gap:8px}
+.cgrid label,.mini{display:block;font-size:11.5px;color:var(--fg-3);margin-bottom:3px;font-weight:600}
+.daychips{display:flex;gap:3px;margin-top:4px;flex-wrap:wrap}
+.daychips button{border:1px solid var(--line);background:var(--surface-2);border-radius:5px;font-size:11px;font-weight:600;padding:1px 6px;cursor:pointer;color:var(--fg-2)}
+.daychips button:hover,.daychips button[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg);border-color:transparent}
+.comp-foot{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.comp-foot .hint{flex:1}
+
+/* ---------- formulieren ---------- */
+.sync{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:600;color:var(--fg-2);background:var(--surface-2);border:1px solid var(--line);border-radius:20px;padding:4px 11px 4px 9px;white-space:nowrap}
+.sync::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--fg-3)}
+.sync.online::before{background:var(--ok)}
+.sync.offline{color:var(--warn);background:var(--warn-soft);border-color:transparent}
+.sync.offline::before{background:var(--warn)}
+.sync.login{color:var(--danger);background:var(--danger-soft);border-color:transparent}
+.sync.login::before{background:var(--danger)}
+#loginDlg{width:min(420px,calc(100vw - 24px))}
+#loginDlg .dlg-body p{margin:0;color:var(--fg-2);line-height:1.5}
+input[type=text],input[type=search],input[type=date],input[type=email],input[type=password],select,textarea{
+  width:100%;height:38px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);padding:0 10px;font-size:14px;min-width:0}
+textarea{height:auto;padding:9px 11px;resize:vertical;line-height:1.45}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);background:var(--surface)}
+.nr-input{font-family:var(--f-mono)}
+.shade-grid{display:flex;flex-wrap:wrap;gap:6px}
+.schip{position:relative;display:inline-flex;align-items:center;gap:7px;height:32px;padding:0 11px 0 7px;border:1.5px solid var(--line);border-radius:20px;cursor:pointer;font:600 12.5px var(--f-mono);background:var(--surface)}
+.schip input{position:absolute;opacity:0;pointer-events:none}
+.schip i{width:17px;height:17px;border-radius:50%;border:1px solid rgba(0,0,0,.18)}
+.schip:has(input:checked){border-color:var(--t-imm);background:var(--t-imm-bg);box-shadow:inset 0 0 0 1px var(--t-imm)}
+.schip:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
+.shade-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.shade-row .mini{margin:0}
+.shade-row input[type=text]{width:150px}
+.form-err{margin:0;background:var(--danger-soft);color:var(--danger);border-radius:8px;padding:8px 12px;font-weight:600;font-size:13px}
+.hint{font-size:12.5px;color:var(--fg-3)}
+kbd{font:500 11px var(--f-mono);border:1px solid var(--line);border-bottom-width:2px;border-radius:4px;padding:0 4px;background:var(--surface-2)}
+
+/* ---------- dialogen ---------- */
+dialog{border:none;padding:0;border-radius:14px;background:var(--surface);color:var(--fg);box-shadow:0 24px 70px rgba(0,0,0,.35);
+  width:min(640px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:hidden}
+dialog[open]{display:flex;flex-direction:column}
+dialog::backdrop{background:rgba(8,14,20,.5)}
+dialog form{display:flex;flex-direction:column;min-height:0;flex:1;margin:0}
+.dlg-head{display:flex;align-items:center;gap:10px;padding:16px 18px 12px;border-bottom:1px solid var(--line-soft)}
+.dlg-head h2{margin:0;font:700 20px/1.2 var(--f-display);flex:1;text-wrap:balance}
+.dlg-body{padding:16px 18px;overflow:auto;display:flex;flex-direction:column;gap:16px;min-height:0}
+.dlg-foot{display:flex;align-items:center;gap:8px;padding:12px 18px;border-top:1px solid var(--line-soft);background:var(--surface-2);flex-wrap:wrap}
+.spacer{flex:1}
+fieldset{border:0;margin:0;padding:0;min-width:0}
+legend,.lbl{display:block;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--fg-2);margin-bottom:6px;padding:0}
+.row2{display:grid;grid-template-columns:1fr 1.5fr;gap:12px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.sub{margin-top:10px}
+.stat-seg{display:flex;flex-wrap:wrap;gap:6px}
+.stat-seg label{position:relative;display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 12px 0 9px;border:1.5px solid var(--line);border-radius:8px;cursor:pointer;font-weight:600;font-size:13px}
+.stat-seg input{position:absolute;opacity:0;pointer-events:none}
+.stat-seg label:has(input:checked){border-color:var(--fg);background:var(--surface-2)}
+.stat-seg label:has(input:focus-visible){outline:2px solid var(--accent);outline-offset:2px}
+.meta{font-size:12.5px;color:var(--fg-3);line-height:1.6;border-top:1px solid var(--line-soft);padding-top:12px}
+.meta b{color:var(--fg-2);font-weight:600}
+details summary{cursor:pointer;font-size:12.5px;color:var(--fg-2);font-weight:600}
+details ol{margin:8px 0 0;padding:0;list-style:none;font-size:12.5px;color:var(--fg-2);display:flex;flex-direction:column;gap:4px}
+details li span{font-family:var(--f-mono);color:var(--fg-3);margin-right:8px;font-size:11.5px}
+
+dialog.wide{width:min(1180px,calc(100vw - 24px));height:calc(100dvh - 24px)}
+.arc-tools{display:flex;gap:10px;flex-wrap:wrap;padding:12px 18px;border-bottom:1px solid var(--line-soft)}
+.arc-tools input{flex:1 1 260px;width:auto}
+.arc-wrap{flex:1;overflow:auto;min-height:0}
+table.arc{width:100%;border-collapse:collapse;font-size:13px;min-width:880px}
+.arc th{position:sticky;top:0;background:var(--surface);text-align:left;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-3);padding:10px 12px;border-bottom:1px solid var(--line);z-index:1}
+.arc td{padding:9px 12px;border-bottom:1px solid var(--line-soft);vertical-align:top}
+.arc tbody tr{cursor:pointer}
+.arc tbody tr:hover{background:var(--surface-2)}
+.arc td small{display:block;color:var(--fg-3);font-size:11.5px;font-family:var(--f-ui)}
+.arc .st{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.muted{color:var(--fg-3)}
+
+/* popover-menu */
+.pop{position:fixed;z-index:1500;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow);padding:5px;min-width:180px;display:flex;flex-direction:column}
+.pop button{display:flex;align-items:center;gap:9px;border:0;background:none;padding:7px 9px;border-radius:7px;cursor:pointer;font-size:13.5px;text-align:left}
+.pop button:hover,.pop button:focus-visible{background:var(--surface-2);outline:none}
+.pop button span{flex:1}
+.pop button.sel{font-weight:700}
+
+.toast{position:fixed;left:50%;bottom:max(20px,calc(env(safe-area-inset-bottom,0px) + 12px));transform:translateX(-50%);background:var(--fg);color:var(--bg);border-radius:10px;padding:10px 12px 10px 16px;display:flex;align-items:center;gap:14px;box-shadow:var(--shadow);z-index:2000;font-size:13.5px;max-width:calc(100vw - 32px)}
+.toast button{background:none;border:0;color:inherit;font-weight:700;text-decoration:underline;cursor:pointer;padding:4px}
+.ex-banner{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--warn-soft);color:var(--fg);font-size:13px;
+  padding-block:8px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));border-bottom:1px solid var(--line)}
+.ex-banner p{margin:0;flex:1 1 300px}
+
+body.dragging,body.dragging *{cursor:grabbing!important}
+body.dragging{user-select:none;-webkit-user-select:none}
+
+@media (max-width:1100px){ .cgrid{grid-template-columns:repeat(3,minmax(0,1fr))} }
+@media (max-width:820px){
+  .app{height:auto;min-height:100%}
+  .work{display:flex;flex-direction:column;gap:14px}
+  .splitter{display:none}
+  .week{height:52vh}
+  .listpanel{height:auto;overflow:visible}
+  .list-scroll{overflow-x:auto;overflow-y:visible}
+  .top-actions{margin-left:0;width:100%}
+}
+@media (max-width:560px){
+  .cgrid,.row2,.row3{grid-template-columns:1fr 1fr}
+  .brand-sub{display:none}
+  .weeklabel b{font-size:17px}
+  .seg.who>span{display:none}
+}
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">
+        <svg width="18" height="20" viewBox="0 0 20 22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M6 2C3.8 2 2.5 3.9 2.5 6.4c0 2 .9 3.3 1.4 5.6.6 2.8.8 8 2.6 8 1.5 0 1.5-4.2 2.6-5.6.5-.7 1.3-.7 1.8 0 1.1 1.4 1.1 5.6 2.6 5.6 1.8 0 2-5.2 2.6-8 .5-2.3 1.4-3.6 1.4-5.6C17.5 3.9 16.2 2 14 2c-1.7 0-2.4.9-4 .9S7.7 2 6 2z"/></svg>
+      </div>
+      <div><div class="brand-name">Labplanner</div><div class="brand-sub">Prothetiek &amp; freeswerk</div></div>
+    </div>
+    <div class="weeknav">
+      <button class="icon-btn" id="prevWeek" type="button" aria-label="Vorige week" title="Vorige week (←)"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 3 5 8l5 5"/></svg></button>
+      <button class="btn ghost" id="todayBtn" type="button" title="Naar deze week (T)">Vandaag</button>
+      <button class="icon-btn" id="nextWeek" type="button" aria-label="Volgende week" title="Volgende week (→)"><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 3 5 5-5 5"/></svg></button>
+      <div class="weeklabel"><b id="weekNo">Week</b><span id="weekRange"></span></div>
+    </div>
+    <div class="top-actions">
+      <span class="sync" id="syncBadge" role="status" title="">Alleen op dit apparaat</span>
+      <div class="seg who" role="group" aria-label="Wie gebruikt dit apparaat">
+        <span>Ik ben</span>
+        <button type="button" data-who="pap" aria-pressed="true">TPP Meurers</button>
+        <button type="button" data-who="eng" aria-pressed="false">NME Precision Technologies</button>
+      </div>
+      <button class="btn ghost" id="archiveBtn" type="button">Alle opdrachten</button>
+      <button class="icon-btn" id="settingsBtn" type="button" aria-label="Instellingen" title="Instellingen"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+    </div>
+  </header>
+
+  <div class="ex-banner" id="exBanner" hidden>
+    <p><b>Je ziet voorbeelden</b> met verzonnen patiënten, zodat je ziet hoe het werkt. Wis ze zodra jullie echte opdrachten gaan invoeren.</p>
+    <button class="btn ghost sm" id="clearExamples" type="button">Voorbeelden wissen</button>
+  </div>
+
+  <div class="work" id="work">
+    <section class="week" id="week" aria-label="Weekoverzicht op einddatum"></section>
+    <div class="splitter" id="splitter" role="separator" aria-orientation="horizontal" aria-label="Sleep om de verdeling te wijzigen" title="Sleep om te verdelen, dubbelklik voor 50/50"></div>
+    <section class="listpanel" aria-label="Takenlijst">
+      <div class="list-bar">
+        <h2>Opdrachten</h2>
+        <input type="search" id="listSearch" placeholder="Zoek patiëntnummer, naam of type" autocomplete="off">
+        <div class="seg" role="group" aria-label="Toon">
+          <button type="button" data-scope="all" aria-pressed="true">Alles</button>
+          <button type="button" data-scope="mine" aria-pressed="false">Voor mij</button>
+        </div>
+        <button type="button" class="over-chip" id="overChip" hidden></button>
+        <span class="spacer"></span>
+        <button class="btn primary" id="newBtn" type="button" title="Nieuwe opdracht (N)"><svg width="14" height="14" viewBox="0 0 14 14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M7 1.5v11M1.5 7h11"/></svg>Nieuwe opdracht</button>
+      </div>
+      <div class="list-scroll" id="listScroll"><div class="list-inner" id="list"></div></div>
+    </section>
+  </div>
+</div>
+
+<!-- Aanmaakblok (wordt in de juiste statusgroep geplaatst) -->
+<form class="composer" id="composer" novalidate hidden>
+  <div class="comp-title">Nieuwe opdracht in <span id="cStatusLbl" class="spill s-todo"><i></i>Te doen</span></div>
+  <div class="tchips" id="cTypes" role="radiogroup" aria-label="Opdrachttype"></div>
+  <input type="text" id="cCustom" placeholder="Omschrijving, bijv. modellen scannen" hidden autocomplete="off">
+  <div class="shade-row" id="cShadeRow" hidden>
+    <span class="mini">Tandkleur</span>
+    <div class="shade-grid" id="cShades"></div>
+    <input type="text" id="cShadeCustom" placeholder="Bijv. B2 of 2M2" hidden autocomplete="off">
+  </div>
+  <div class="cgrid">
+    <div><label for="cNr">Patiëntnummer</label><input type="text" id="cNr" class="nr-input" list="patientList" autocomplete="off" spellcheck="false"></div>
+    <div><label for="cName">Patiëntnaam</label><input type="text" id="cName" autocomplete="off"></div>
+    <div><label for="cDate">Klaar op</label><input type="date" id="cDate"><div class="daychips" id="cDays"></div></div>
+    <div><label for="cTime">Uiterlijk om</label><select id="cTime"></select></div>
+    <div><label for="cAssignee">Voor</label><select id="cAssignee"></select></div>
+    <div><label for="cPrio">Prioriteit</label><select id="cPrio"></select></div>
+  </div>
+  <p class="form-err" id="cErr" role="alert" hidden></p>
+  <div class="comp-foot">
+    <span class="hint"><kbd>Enter</kbd> opslaan · <kbd>Esc</kbd> annuleren</span>
+    <button type="button" class="btn ghost sm" id="cCancel">Annuleren</button>
+    <button type="submit" class="btn primary sm">Opdracht opslaan</button>
+  </div>
+</form>
+<datalist id="patientList"></datalist>
+
+<!-- Bewerken -->
+<dialog id="editor" aria-labelledby="edTitle">
+  <form id="edForm" novalidate>
+    <div class="dlg-head">
+      <h2 id="edTitle">Opdracht bewerken</h2>
+      <button type="button" class="icon-btn bare" data-close aria-label="Sluiten"><svg width="16" height="16" viewBox="0 0 16 16" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3l10 10M13 3 3 13"/></svg></button>
+    </div>
+    <div class="dlg-body">
+      <fieldset><legend>Status</legend><div class="stat-seg" id="fStatus"></div></fieldset>
+      <fieldset>
+        <legend>Opdrachttype</legend>
+        <div class="tchips" id="fTypes"></div>
+        <div class="sub" id="fCustomWrap" hidden><input id="fCustom" type="text" placeholder="Omschrijving" autocomplete="off"></div>
+      </fieldset>
+      <fieldset id="fShadeWrap" hidden>
+        <legend>Tandkleur</legend>
+        <div class="shade-row"><div class="shade-grid" id="fShades"></div><input id="fShadeCustom" type="text" placeholder="Bijv. B2 of 2M2" hidden autocomplete="off"></div>
+      </fieldset>
+      <div class="row2">
+        <div><label class="lbl" for="fNr">Patiëntnummer</label><input id="fNr" type="text" class="nr-input" list="patientList" autocomplete="off" spellcheck="false"></div>
+        <div><label class="lbl" for="fName">Patiëntnaam</label><input id="fName" type="text" autocomplete="off"></div>
+      </div>
+      <div class="row3">
+        <div><label class="lbl" for="fDate">Klaar op</label><input id="fDate" type="date"></div>
+        <div><label class="lbl" for="fTime">Uiterlijk om</label><select id="fTime"></select></div>
+        <div><label class="lbl" for="fAssignee">Voor</label><select id="fAssignee"></select></div>
+      </div>
+      <div class="row2" style="grid-template-columns:1fr 2fr">
+        <div><label class="lbl" for="fPrio">Prioriteit</label><select id="fPrio"></select></div>
+        <div><label class="lbl" for="fNote">Notitie</label><textarea id="fNote" rows="1" placeholder="Optioneel"></textarea></div>
+      </div>
+      <p class="form-err" id="fErr" role="alert" hidden></p>
+      <div class="meta" id="edMeta"></div>
+      <details id="edHist"><summary>Geschiedenis</summary><ol id="histList"></ol></details>
+    </div>
+    <div class="dlg-foot">
+      <button type="button" class="btn danger-ghost" id="delBtn">Verwijderen</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn ghost" data-close>Annuleren</button>
+      <button type="submit" class="btn primary">Opslaan</button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Archief -->
+<dialog id="archive" class="wide" aria-labelledby="arcTitle">
+  <div class="dlg-head">
+    <h2 id="arcTitle">Alle opdrachten</h2>
+    <span class="hint" id="arcCount"></span>
+    <button type="button" class="icon-btn bare" data-close aria-label="Sluiten"><svg width="16" height="16" viewBox="0 0 16 16" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3l10 10M13 3 3 13"/></svg></button>
+  </div>
+  <div class="arc-tools">
+    <input type="search" id="arcSearch" placeholder="Zoek op patiëntnummer, naam, type, tandkleur of notitie" autocomplete="off">
+    <div class="seg" id="arcFilter" role="group" aria-label="Filter">
+      <button type="button" data-f="all" aria-pressed="true">Alles</button>
+      <button type="button" data-f="open" aria-pressed="false">Open</button>
+      <button type="button" data-f="done" aria-pressed="false">Klaar</button>
+      <button type="button" data-f="deleted" aria-pressed="false">Verwijderd</button>
+    </div>
+  </div>
+  <div class="arc-wrap">
+    <table class="arc">
+      <thead><tr><th>Aangemaakt</th><th>Type</th><th>Patiëntnr.</th><th>Naam</th><th>Tandkleur</th><th>Klaar op</th><th>Voor</th><th>Status</th></tr></thead>
+      <tbody id="arcBody"></tbody>
+    </table>
+  </div>
+  <div class="dlg-foot">
+    <span class="hint">Alles blijft bewaard: open, afgeronde en verwijderde opdrachten.</span>
+    <span class="spacer"></span>
+    <button type="button" class="btn ghost" id="exportBtn">Back-up downloaden</button>
+    <label class="btn ghost" for="importFile" tabindex="0" id="importLbl">Back-up terugzetten</label>
+    <input type="file" id="importFile" accept="application/json,.json" hidden>
+  </div>
+</dialog>
+
+<!-- Instellingen -->
+<dialog id="settingsDlg" aria-labelledby="setTitle">
+  <form id="setForm" novalidate>
+    <div class="dlg-head">
+      <h2 id="setTitle">Instellingen</h2>
+      <button type="button" class="icon-btn bare" data-close aria-label="Sluiten"><svg width="16" height="16" viewBox="0 0 16 16" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3l10 10M13 3 3 13"/></svg></button>
+    </div>
+    <div class="dlg-body">
+      <div class="row2" style="grid-template-columns:1fr 1fr">
+        <div><label class="lbl" for="sPap">Naam tandprotheticus</label><input id="sPap" type="text"></div>
+        <div><label class="lbl" for="sEng">Naam engineer</label><input id="sEng" type="text"></div>
+      </div>
+      <label class="hint" style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="sWeekend"> Zaterdag en zondag tonen in de week</label>
+      <div id="sOnline" class="meta" hidden>
+        <span id="sOnlineTxt"></span><br>
+        <button type="button" class="btn ghost sm" id="logoutBtn" style="margin-top:8px">Uitloggen op dit apparaat</button>
+      </div>
+    </div>
+    <div class="dlg-foot"><span class="spacer"></span><button type="button" class="btn ghost" data-close>Annuleren</button><button type="submit" class="btn primary">Opslaan</button></div>
+  </form>
+</dialog>
+
+<!-- Inloggen (alleen als de online database is ingesteld) -->
+<dialog id="loginDlg" aria-labelledby="loginTitle">
+  <form id="loginForm" novalidate>
+    <div class="dlg-head"><h2 id="loginTitle">Inloggen bij Labplanner</h2></div>
+    <div class="dlg-body">
+      <p>Log één keer in op dit apparaat. Daarna blijf je ingelogd en zie je dezelfde planner als de rest.</p>
+      <div><label class="lbl" for="lEmail">E-mailadres</label><input id="lEmail" type="email" autocomplete="username" required></div>
+      <div><label class="lbl" for="lPass">Wachtwoord</label><input id="lPass" type="password" autocomplete="current-password" required></div>
+      <p class="form-err" id="lErr" role="alert" hidden></p>
+    </div>
+    <div class="dlg-foot"><span class="spacer"></span><button type="submit" class="btn primary" id="lBtn">Inloggen</button></div>
+  </form>
+</dialog>
+
+<div class="pop" id="pop" role="menu" hidden></div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.79.0/dist/umd/supabase.min.js"></script>
+<script>
+(function(){
+'use strict';
+
+/* ---------- online database (Supabase) ----------
+   Leeg = alles blijft alleen in deze browser.
+   Ingevuld = iedereen die inlogt ziet en bewerkt dezelfde planner, live. */
+const ONLINE = {
+  url: '',   // bijv. https://abcdefgh.supabase.co
+  key: ''    // de "publishable" (of "anon public") key van het project
+};
+
+/* ---------- vaste gegevens ---------- */
+const TYPES = {
+  tryin:  {label:'Printen try-in'},
+  base:   {label:'Frezen base'},
+  imm:    {label:'Frezen immediaat'},
+  steg:   {label:'Frezen steg'},
+  lepel:  {label:'Printen afdruklepels'},
+  anders: {label:'Anders'}
+};
+const SHADES = [['A1','#f1e8d4'],['A2','#e9dcbc'],['A3','#e1cfa6'],['A3.5','#d8c190'],['A4','#c9ac78'],['C1','#e3dccb'],['C2','#d2c8af']];
+const STATUSES = [{k:'busy',label:'Mee bezig'},{k:'todo',label:'Te doen'},{k:'wait',label:'Verwacht'},{k:'done',label:'Klaar'}];
+const PRIOS = [{k:'urgent',label:'Spoed'},{k:'high',label:'Hoog'},{k:'normal',label:'Normaal'},{k:'low',label:'Laag'},{k:'',label:'Geen'}];
+const DOW = ['ma','di','wo','do','vr','za','zo'];
+const MON = ['jan','feb','mrt','apr','mei','jun','jul','aug','sep','okt','nov','dec'];
+const FIELD_NAMES = {type:'type',typeCustom:'omschrijving',shade:'tandkleur',shadeCustom:'tandkleur',patientNr:'patiëntnummer',patientName:'naam',dueDate:'datum',dueTime:'tijd',status:'status',assignee:'voor',priority:'prioriteit',note:'notitie'};
+const TIMES = (() => { const a = []; for (let m = 7*60; m <= 19*60; m += 30) a.push(`${String(Math.floor(m/60)).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`); return a; })();
+
+/* ---------- hulpjes ---------- */
+const $ = s => document.querySelector(s);
+const F = id => document.getElementById(id);
+const pad = n => String(n).padStart(2,'0');
+const ymd = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parseYmd = s => { const [y,m,d] = s.split('-').map(Number); return new Date(y,m-1,d); };
+const addDays = (d,n) => { const x = new Date(d); x.setDate(x.getDate()+n); return x; };
+const mondayOf = d => { const x = new Date(d.getFullYear(),d.getMonth(),d.getDate()); return addDays(x, -((x.getDay()+6)%7)); };
+const dowIdx = d => (d.getDay()+6)%7;
+const fmtDay = s => { const d = parseYmd(s); return `${DOW[dowIdx(d)]} ${d.getDate()} ${MON[d.getMonth()]}`; };
+const fmtStamp = iso => { const d = new Date(iso); return `${DOW[dowIdx(d)]} ${d.getDate()} ${MON[d.getMonth()]} ${d.getFullYear()}, ${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+const fmtStampShort = iso => { const d = new Date(iso); return `${pad(d.getDate())}-${pad(d.getMonth()+1)}-${String(d.getFullYear()).slice(2)} ${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+const shortDate = iso => { const d = new Date(iso); return `${d.getDate()} ${MON[d.getMonth()]}`; };
+const nowIso = () => new Date().toISOString();
+const nowHM = () => { const n = new Date(); return `${pad(n.getHours())}:${pad(n.getMinutes())}`; };
+const todayStr = () => ymd(new Date());
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,9);
+const clone = o => JSON.parse(JSON.stringify(o));
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function isoWeek(d){ const t = new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate())); const day = t.getUTCDay()||7; t.setUTCDate(t.getUTCDate()+4-day); const y0 = new Date(Date.UTC(t.getUTCFullYear(),0,1)); return Math.ceil(((t-y0)/864e5+1)/7); }
+const daysBetween = (a,b) => Math.round((parseYmd(b)-parseYmd(a))/864e5);
+function nextWorkday(){ let d = addDays(new Date(),1); while (dowIdx(d) > 4) d = addDays(d,1); return ymd(d); }
+function readLS(k){ try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : null; } catch(e){ return null; } }
+function writeLS(k,v){ try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch(e){ return false; } }
+
+/* ---------- instellingen (per apparaat) ---------- */
+const SET_KEY = 'labplanner.settings.v2';
+const DEFAULT_NAMES = {pap:'TPP Meurers', eng:'NME Precision Technologies'};
+const settings = Object.assign({names:{...DEFAULT_NAMES}, me:'pap', weekend:true, split:0.5, collapsed:{done:true}, scope:'all', lastTime:'09:00', lastAssignee:'eng'},
+  readLS(SET_KEY) || (() => { const o = readLS('labplanner.settings.v1'); return o ? {names:o.names, me:o.me, weekend:o.weekend} : {}; })());
+if (!settings.names || settings.names.pap === 'Pap') settings.names = Object.assign({}, settings.names, {pap:DEFAULT_NAMES.pap});
+if (settings.names.eng === 'Engineer') settings.names.eng = DEFAULT_NAMES.eng;
+const saveSettings = () => writeLS(SET_KEY, settings);
+const personName = k => settings.names[k] || 'Niemand';
+
+/* ---------- opslag ----------
+   Nu lokaal in deze browser. Hier wordt later de gedeelde online database aangesloten. */
+const Store = {
+  KEY:'labplanner.data.v2',
+  tasks:[],
+  init(){
+    const d = readLS(this.KEY);
+    if (d && Array.isArray(d.tasks)){ this.tasks = d.tasks; return true; }
+    const old = readLS('labplanner.data.v1');
+    if (old && Array.isArray(old.tasks) && old.tasks.some(t => !t.example)){
+      this.tasks = old.tasks.filter(t => !t.example).map(t => {
+        const n = Object.assign({}, t, {dueDate:t.deadline || t.date || '', dueTime:'', status:t.status === 'done' ? 'done' : 'todo', assignee:'eng', priority:''});
+        delete n.date; delete n.start; delete n.duration; delete n.deadline; return n;
+      });
+      this.save(); return true;
+    }
+    this.tasks = []; return false;
+  },
+  save(){ if (!writeLS(this.KEY, {version:2, savedAt:nowIso(), tasks:this.tasks}) && !Sync.client) toast('Opslaan mislukt: deze browser blokkeert lokale opslag.'); },
+  get(id){ return this.tasks.find(t => t.id === id); },
+  put(t){ t.updatedAt = nowIso(); this.replace(t); this.save(); Sync.push([t]); render(); },
+  replace(t){ const i = this.tasks.findIndex(x => x.id === t.id); if (i < 0) this.tasks.push(t); else this.tasks[i] = t; },
+  removeHard(pred){ const gone = this.tasks.filter(pred).map(t => t.id); this.tasks = this.tasks.filter(t => !pred(t)); this.save(); Sync.remove(gone); render(); },
+  live(){ return this.tasks.filter(t => !t.deleted); }
+};
+
+/* ---------- synchronisatie met de online database ---------- */
+const PENDING_KEY = 'labplanner.pending.v1';
+const Sync = {
+  client:null, channel:null, state:'local', pending: readLS(PENDING_KEY) || {},
+  savePending(){ writeLS(PENDING_KEY, this.pending); },
+  async start(){
+    if (!ONLINE.url || !ONLINE.key){ this.state = 'local'; updateSyncBadge(); return; }
+    if (!window.supabase){ this.state = 'offline'; updateSyncBadge('Geen internet: de online koppeling kon niet laden.'); return; }
+    this.client = window.supabase.createClient(ONLINE.url, ONLINE.key, {auth:{persistSession:true, autoRefreshToken:true, storageKey:'labplanner.auth'}});
+    this.client.auth.onAuthStateChange(ev => { if (ev === 'SIGNED_OUT'){ this.state = 'login'; this.unsubscribe(); updateSyncBadge(); showLogin(); } });
+    const {data} = await this.client.auth.getSession();
+    if (!data.session){ this.state = 'login'; updateSyncBadge(); showLogin(); return; }
+    await this.connect();
+  },
+  async connect(){
+    const {data, error} = await this.client.from('tasks').select('id,data');
+    if (error){ this.state = 'offline'; updateSyncBadge(error.message); return; }
+    const remote = new Map(data.map(r => [r.id, r.data]));
+    // Lokale opdrachten die nog niet online staan (of nog niet verstuurd waren) gaan alsnog mee.
+    const up = Store.tasks.filter(t => !t.example && (!remote.has(t.id) || (this.pending[t.id] && (t.updatedAt||'') > (remote.get(t.id).updatedAt||''))));
+    up.forEach(t => remote.set(t.id, t));
+    Store.tasks = [...remote.values()];
+    Store.save();
+    this.state = 'online';
+    if (up.length) await this.push(up);
+    this.subscribe();
+    updateSyncBadge(); render();
+  },
+  async push(list){
+    if (!this.client || !list.length) return;
+    list.forEach(t => this.pending[t.id] = true); this.savePending();
+    if (this.state === 'login') return;
+    const {error} = await this.client.from('tasks').upsert(list.map(t => ({id:t.id, data:t, updated_at:t.updatedAt || nowIso()})));
+    if (error){ this.state = 'offline'; updateSyncBadge(error.message); return; }
+    list.forEach(t => delete this.pending[t.id]); this.savePending();
+    if (this.state !== 'online'){ this.state = 'online'; }
+    updateSyncBadge();
+  },
+  async remove(ids){
+    if (!this.client || !ids.length || this.state === 'login') return;
+    const {error} = await this.client.from('tasks').delete().in('id', ids);
+    if (error) toast('Verwijderen in de online database is mislukt. Probeer het later opnieuw.');
+  },
+  subscribe(){
+    if (this.channel) return;
+    this.channel = this.client.channel('tasks-live')
+      .on('postgres_changes', {event:'*', schema:'public', table:'tasks'}, p => {
+        if (p.eventType === 'DELETE'){ const id = p.old && p.old.id; Store.tasks = Store.tasks.filter(t => t.id !== id); }
+        else if (p.new && p.new.data){ const t = p.new.data, cur = Store.get(t.id); if (!cur || (t.updatedAt||'') >= (cur.updatedAt||'')) Store.replace(t); }
+        Store.save(); render();
+      })
+      .subscribe(st => { if (st === 'SUBSCRIBED' && this.state !== 'login'){ this.retry(); } });
+  },
+  unsubscribe(){ if (this.channel){ this.client.removeChannel(this.channel); this.channel = null; } },
+  async retry(){
+    if (!this.client || this.state === 'login') return;
+    const ids = Object.keys(this.pending);
+    if (this.state === 'offline' && !ids.length){ await this.connect(); return; }
+    if (ids.length) await this.push(Store.tasks.filter(t => ids.includes(t.id)));
+  }
+};
+window.addEventListener('online', () => Sync.retry());
+setInterval(() => Sync.retry(), 30000);
+
+function updateSyncBadge(detail){
+  const b = F('syncBadge'), n = Object.keys(Sync.pending).length;
+  b.className = 'sync ' + Sync.state;
+  b.textContent = Sync.state === 'online' ? 'Online' : Sync.state === 'offline' ? `Offline${n ? ` · ${n} nog te versturen` : ''}` : Sync.state === 'login' ? 'Niet ingelogd' : 'Alleen op dit apparaat';
+  b.title = detail || (Sync.state === 'online' ? 'Alle wijzigingen worden direct gedeeld.' : Sync.state === 'offline' ? 'Wijzigingen worden bewaard en verstuurd zodra er weer verbinding is.' : Sync.state === 'local' ? 'Er is nog geen online database ingesteld.' : '');
+}
+function showLogin(){ if (!F('loginDlg').open){ F('lErr').hidden = true; F('loginDlg').showModal(); setTimeout(() => F('lEmail').focus(), 30); } }
+
+function commit(t, what, msg){
+  const prev = Store.get(t.id);
+  const before = prev ? clone(prev) : null;
+  if (what) t.history = (t.history || []).concat([{at:nowIso(), by:settings.me, what}]);
+  Store.put(t);
+  if (msg) toast(msg, before ? () => { Store.put(before); toast('Teruggezet'); } : () => { Store.removeHard(x => x.id === t.id); toast('Teruggezet'); });
+}
+
+/* ---------- labels & iconen ---------- */
+const typeLabel = t => t.type === 'anders' ? (t.typeCustom || 'Anders') : (TYPES[t.type]?.label || t.type);
+const shadeLabel = t => t.type !== 'imm' || !t.shade ? '' : (t.shade === 'custom' ? (t.shadeCustom || 'Anders') : t.shade);
+const shadeColor = t => (SHADES.find(s => s[0] === t.shade) || [,'#d9d2c0'])[1];
+const statusLabel = k => (STATUSES.find(s => s.k === k) || STATUSES[1]).label;
+const prioLabel = k => (PRIOS.find(p => p.k === (k||'')) || PRIOS[4]).label;
+function shadeChip(t){ const l = shadeLabel(t); return l ? `<span class="chip shade"><i style="background:${shadeColor(t)}"></i>${esc(l)}</span>` : ''; }
+function statusIcon(k, size){
+  const s = size || 16;
+  const box = `width="${s}" height="${s}" viewBox="0 0 16 16" aria-hidden="true"`;
+  if (k === 'busy') return `<svg ${box}><circle cx="8" cy="8" r="6.2" style="fill:none;stroke:var(--s-busy);stroke-width:2"/><circle cx="8" cy="8" r="3" style="fill:var(--s-busy)"/></svg>`;
+  if (k === 'wait') return `<svg ${box}><circle cx="8" cy="8" r="6.2" style="fill:none;stroke:var(--s-wait);stroke-width:2;stroke-dasharray:1.4 2.3"/></svg>`;
+  if (k === 'done') return `<svg ${box}><circle cx="8" cy="8" r="7.2" style="fill:var(--s-done)"/><path d="M4.8 8.3 7 10.4l4.2-4.6" style="fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"/></svg>`;
+  return `<svg ${box}><circle cx="8" cy="8" r="6.2" style="fill:none;stroke:var(--s-todo);stroke-width:2;stroke-dasharray:2.6 2.2"/></svg>`;
+}
+function flagSvg(k, size){
+  const s = size || 15, col = k ? `var(--p-${k})` : 'var(--fg-3)';
+  return `<svg width="${s}" height="${s}" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.5 14.5V2.2" style="stroke:${col};stroke-width:1.6;stroke-linecap:round;fill:none"/><path d="M3.5 2.5h8.6l-2 3.1 2 3.1H3.5z" style="fill:${k ? col : 'none'};stroke:${col};stroke-width:1.4;stroke-linejoin:round"/></svg>`;
+}
+const initials = n => { const w = String(n).trim().split(/\s+/); if (/^[A-Z]{2,4}$/.test(w[0])) return w[0]; return (w.length > 1 ? w[0][0] + w[1][0] : String(n).slice(0,2)).toUpperCase(); };
+function avatar(k, sm){
+  if (!k) return `<span class="av none${sm?' sm':''}" title="Niemand toegewezen"><svg width="10" height="10" viewBox="0 0 12 12" aria-hidden="true"><circle cx="6" cy="4" r="2.3" style="fill:none;stroke:currentColor;stroke-width:1.4"/><path d="M1.8 11c.6-2.2 2.2-3.2 4.2-3.2s3.6 1 4.2 3.2" style="fill:none;stroke:currentColor;stroke-width:1.4"/></svg></span>`;
+  const n = personName(k);
+  return `<span class="av av-${k}${sm?' sm':''}" title="Voor ${esc(n)}">${esc(initials(n))}</span>`;
+}
+const noteSvg = '<svg width="13" height="13" viewBox="0 0 16 16" aria-hidden="true"><path d="M3 3.5h10M3 7h10M3 10.5h6" style="stroke:currentColor;stroke-width:1.6;stroke-linecap:round"/></svg>';
+const caretSvg = '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" style="fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round"/></svg>';
+const plusSvg = '<svg width="13" height="13" viewBox="0 0 14 14" aria-hidden="true"><path d="M7 2v10M2 7h10" style="stroke:currentColor;stroke-width:2;stroke-linecap:round"/></svg>';
+const checkSvg = '<svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 6.5 5 9l4.5-6" style="fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round"/></svg>';
+
+function dueState(t){
+  if (!t.dueDate || t.status === 'done') return '';
+  const td = todayStr();
+  if (t.dueDate < td || (t.dueDate === td && t.dueTime && t.dueTime <= nowHM())) return 'over';
+  if (t.dueDate === td || t.dueDate === ymd(addDays(new Date(),1))) return 'soon';
+  return '';
+}
+function dueLabel(t){
+  if (!t.dueDate) return '—';
+  const n = daysBetween(todayStr(), t.dueDate);
+  const d = n === 0 ? 'Vandaag' : n === 1 ? 'Morgen' : n === -1 ? 'Gisteren' : fmtDay(t.dueDate);
+  return d + (t.dueTime ? ` · ${t.dueTime}` : '');
+}
+function dueRel(t){
+  if (dueState(t) !== 'over') return '';
+  const n = daysBetween(t.dueDate, todayStr());
+  return n <= 0 ? 'te laat' : n === 1 ? '1 dag te laat' : `${n} dagen te laat`;
+}
+const prioRank = k => ({urgent:0, high:1, normal:2, low:3}[k] ?? 2.5);
+const byDue = (a,b) => (a.dueDate||'9999').localeCompare(b.dueDate||'9999') || (a.dueTime||'99').localeCompare(b.dueTime||'99') || prioRank(a.priority) - prioRank(b.priority) || (a.createdAt||'').localeCompare(b.createdAt||'');
+
+/* ---------- elementen ---------- */
+const weekEl = F('week'), listEl = F('list'), listScroll = F('listScroll'), composer = F('composer');
+const editor = F('editor'), edForm = F('edForm'), arcDlg = F('archive'), setDlg = F('settingsDlg'), pop = F('pop');
+let weekStart = mondayOf(new Date());
+function days(){ const n = settings.weekend ? 7 : 5; return Array.from({length:n}, (_,i) => ymd(addDays(weekStart,i))); }
+
+/* ---------- render ---------- */
+function render(){
+  if (press && press.active) return;
+  renderTop(); renderWeek(); renderList();
+  if (arcDlg.open) renderArchive();
+}
+function renderTop(){
+  const end = addDays(weekStart, settings.weekend ? 6 : 4);
+  F('weekNo').textContent = `Week ${isoWeek(weekStart)}`;
+  const same = weekStart.getMonth() === end.getMonth();
+  F('weekRange').textContent = `${weekStart.getDate()}${same ? '' : ' ' + MON[weekStart.getMonth()]} – ${end.getDate()} ${MON[end.getMonth()]} ${end.getFullYear()}`;
+  document.querySelectorAll('.who button').forEach(b => { b.textContent = personName(b.dataset.who); b.setAttribute('aria-pressed', String(b.dataset.who === settings.me)); });
+  F('exBanner').hidden = !Store.tasks.some(t => t.example);
+}
+
+function acardHtml(t){
+  const tip = `${typeLabel(t)}${t.patientNr ? ' · ' + t.patientNr : ''}${t.patientName ? ' · ' + t.patientName : ''}\nKlaar op: ${dueLabel(t)}\nStatus: ${statusLabel(t.status)} · Voor: ${personName(t.assignee)}\nAangemaakt: ${fmtStamp(t.createdAt)} door ${personName(t.createdBy)}`;
+  const flag = (t.priority === 'urgent' || t.priority === 'high') ? `<span title="Prioriteit: ${prioLabel(t.priority)}">${flagSvg(t.priority, 13)}</span>` : '';
+  return `<div class="acard t-${esc(t.type)}${t.status==='done'?' done':''}" data-id="${esc(t.id)}" tabindex="0" role="button" title="${esc(tip)}" aria-label="${esc(tip.replace(/\n/g,', '))}">
+    <div class="ac-top"><button type="button" class="sdot" data-status-menu="${esc(t.id)}" aria-label="Status: ${statusLabel(t.status)}. Wijzigen">${statusIcon(t.status,15)}</button><span class="ac-type">${esc(typeLabel(t))}</span>${flag}${avatar(t.assignee, true)}</div>
+    ${(t.patientNr || t.patientName) ? `<div class="ac-pt">${t.patientNr ? `<b class="mono">${esc(t.patientNr)}</b>` : ''}${esc(t.patientName||'')}</div>` : ''}
+    ${shadeLabel(t) ? `<div class="ac-meta">${shadeChip(t)}</div>` : ''}
+  </div>`;
+}
+
+function renderWeek(){
+  const ds = days(), td = todayStr(), live = Store.live();
+  weekEl.style.setProperty('--cols', ds.map((_,i) => i >= 5 ? 'minmax(130px,.7fr)' : 'minmax(165px,1fr)').join(' '));
+  weekEl.innerHTML = ds.map(d => {
+    const dt = parseYmd(d);
+    const list = live.filter(t => t.dueDate === d);
+    const open = list.filter(t => t.status !== 'done').length;
+    const keys = [...new Set(list.map(t => t.dueTime || ''))].sort((a,b) => (a||'99').localeCompare(b||'99'));
+    const body = keys.map(k => {
+      const items = list.filter(t => (t.dueTime || '') === k).sort((a,b) => (a.status==='done') - (b.status==='done') || prioRank(a.priority) - prioRank(b.priority) || (a.createdAt||'').localeCompare(b.createdAt||''));
+      const over = items.some(t => dueState(t) === 'over');
+      return `<div class="tgroup${over?' over':''}" data-time="${k}">
+        <div class="tg-head"><span class="tg-time${k?'':' eod'}">${k || 'Einde dag'}</span><span class="tg-rule"></span>${items.length > 1 ? `<span class="tg-n">${items.length}×</span>` : ''}</div>
+        ${items.map(acardHtml).join('')}
+      </div>`;
+    }).join('') || '<div class="dc-empty">Niets op deze dag.<br>Klik om toe te voegen.</div>';
+    return `<div class="daycol${d===td?' today':''}${d<td?' past':''}${dowIdx(dt)>=5?' wkend':''}" data-date="${d}">
+      <div class="dc-head"><span class="dh-dow">${DOW[dowIdx(dt)]}</span><span class="dh-num">${dt.getDate()}</span><span class="dh-mon">${MON[dt.getMonth()]}</span>${open ? `<span class="dc-count" title="${open} open">${open}</span>` : ''}<button type="button" class="dc-add" data-add-date="${d}" aria-label="Opdracht toevoegen op ${fmtDay(d)}" title="Opdracht toevoegen op ${fmtDay(d)}">${plusSvg}</button></div>
+      <div class="day-body">${body}</div>
+    </div>`;
+  }).join('');
+}
+
+function rowHtml(t){
+  const ds = dueState(t);
+  return `<div class="lrow lcols t-${esc(t.type)}${t.status==='done'?' done':''}" data-id="${esc(t.id)}" tabindex="0" role="button">
+    <button type="button" class="sdot" data-status-menu="${esc(t.id)}" aria-label="Status: ${statusLabel(t.status)}. Wijzigen">${statusIcon(t.status)}</button>
+    <div class="lname"><span class="ltype"><i class="sw"></i>${esc(typeLabel(t))}</span><span class="lpt">${t.patientNr ? `<b class="mono">${esc(t.patientNr)}</b>` : ''}${esc(t.patientName||'')}</span>${shadeChip(t)}${t.note ? `<span class="lnote" title="${esc(t.note)}">${noteSvg}</span>` : ''}</div>
+    <div><button type="button" class="icon-plain" data-assign-menu="${esc(t.id)}" aria-label="Voor: ${esc(personName(t.assignee))}. Wijzigen">${avatar(t.assignee)}</button></div>
+    <div class="ldue ${ds}">${esc(dueLabel(t))}${dueRel(t) ? `<small>${dueRel(t)}</small>` : ''}</div>
+    <div><button type="button" class="icon-plain" data-prio-menu="${esc(t.id)}" aria-label="Prioriteit: ${prioLabel(t.priority)}. Wijzigen" title="Prioriteit: ${prioLabel(t.priority)}">${flagSvg(t.priority)}</button></div>
+    <div class="lmade">${shortDate(t.createdAt)} ${new Date(t.createdAt).toTimeString().slice(0,5)}<small>door ${esc(personName(t.createdBy))}</small></div>
+  </div>`;
+}
+
+let comp = {open:false, status:'todo'};
+function renderList(){
+  document.body.appendChild(composer);
+  const q = F('listSearch').value.trim().toLowerCase();
+  let live = Store.live();
+  if (settings.scope === 'mine') live = live.filter(t => t.assignee === settings.me);
+  if (q) live = live.filter(t => [t.patientNr, t.patientName, typeLabel(t), shadeLabel(t), t.note].join(' ').toLowerCase().includes(q));
+  const overN = Store.live().filter(t => dueState(t) === 'over').length;
+  F('overChip').hidden = !overN; F('overChip').textContent = `${overN} te laat`;
+  if (comp.open && settings.collapsed[comp.status]) settings.collapsed[comp.status] = false;
+  listEl.innerHTML = STATUSES.map(s => {
+    let items = live.filter(t => t.status === s.k);
+    items = s.k === 'done' ? items.sort((a,b) => (b.completedAt||b.updatedAt||'').localeCompare(a.completedAt||a.updatedAt||'')) : items.sort(byDue);
+    const shown = s.k === 'done' ? items.slice(0,40) : items;
+    const col = !!settings.collapsed[s.k];
+    return `<section class="sgroup" data-status="${s.k}">
+      <div class="sg-head">
+        <button type="button" class="sg-caret" data-toggle="${s.k}" aria-expanded="${!col}" aria-label="${col?'Uitklappen':'Inklappen'}: ${s.label}">${caretSvg}</button>
+        <span class="spill s-${s.k}">${s.k === 'done' ? checkSvg : '<i></i>'}${s.label}</span>
+        <span class="sg-n">${items.length}</span>
+        ${s.k !== 'done' ? `<button type="button" class="sg-add" data-add="${s.k}" aria-label="Opdracht toevoegen aan ${s.label}" title="Opdracht toevoegen">${plusSvg}</button>` : ''}
+      </div>
+      ${col ? '' : `
+        ${shown.length ? `<div class="lhead lcols"><span></span><span>Opdracht</span><span>Voor</span><span>Klaar op</span><span>Prioriteit</span><span>Aangemaakt</span></div>` : ''}
+        ${shown.map(rowHtml).join('')}
+        ${s.k === 'done' && items.length > shown.length ? `<p class="more">Oudere afgeronde opdrachten vind je bij "Alle opdrachten".</p>` : ''}
+        <div class="cslot" data-s="${s.k}"></div>
+        ${s.k !== 'done' ? `<button type="button" class="add-row" data-add="${s.k}">+ Opdracht toevoegen</button>` : ''}`}
+    </section>`;
+  }).join('');
+  if (comp.open){
+    const slot = listEl.querySelector(`.cslot[data-s="${comp.status}"]`);
+    if (slot){ slot.appendChild(composer); composer.hidden = false; const add = slot.nextElementSibling; if (add) add.hidden = true; }
+  } else composer.hidden = true;
+}
+
+/* ---------- menu's (status, voor, prioriteit) ---------- */
+let popAnchor = null;
+function openMenu(anchor, items, onPick){
+  if (popAnchor === anchor && !pop.hidden){ closeMenu(); return; }
+  popAnchor = anchor;
+  pop.innerHTML = items.map((it,i) => `<button type="button" role="menuitem" data-i="${i}" class="${it.sel?'sel':''}">${it.icon||''}<span>${esc(it.label)}</span>${it.sel ? checkSvg : ''}</button>`).join('');
+  pop.hidden = false;
+  const r = anchor.getBoundingClientRect(), pw = pop.offsetWidth, ph = pop.offsetHeight;
+  let x = Math.min(r.left, innerWidth - pw - 8), y = r.bottom + 4;
+  if (y + ph > innerHeight - 8) y = Math.max(8, r.top - ph - 4);
+  pop.style.left = Math.max(8, x) + 'px'; pop.style.top = y + 'px';
+  pop.onclick = e => { const b = e.target.closest('button'); if (!b) return; closeMenu(); onPick(items[+b.dataset.i].value); };
+  pop.querySelector('button')?.focus();
+}
+function closeMenu(){ pop.hidden = true; popAnchor = null; }
+document.addEventListener('pointerdown', e => { if (!pop.hidden && !pop.contains(e.target) && !e.target.closest('[data-status-menu],[data-prio-menu],[data-assign-menu]')) closeMenu(); }, true);
+window.addEventListener('resize', closeMenu);
+listScroll.addEventListener('scroll', closeMenu, {passive:true});
+
+function setField(id, patch, what, msg){
+  const t = clone(Store.get(id)); if (!t) return;
+  Object.assign(t, patch);
+  commit(t, what, msg);
+}
+function setStatus(id, k){
+  const t = Store.get(id); if (!t || t.status === k) return;
+  setField(id, {status:k, completedAt: k === 'done' ? nowIso() : null}, `Status: ${statusLabel(k)}`, k === 'done' ? `Klaar: ${t.patientNr || typeLabel(t)}` : `Status: ${statusLabel(k)}`);
+}
+
+document.addEventListener('click', e => {
+  const sm = e.target.closest('[data-status-menu]');
+  if (sm){ const t = Store.get(sm.dataset.statusMenu); if (t) openMenu(sm, STATUSES.map(s => ({value:s.k, label:s.label, icon:statusIcon(s.k), sel:s.k === t.status})), v => setStatus(t.id, v)); return; }
+  const pm = e.target.closest('[data-prio-menu]');
+  if (pm){ const t = Store.get(pm.dataset.prioMenu); if (t) openMenu(pm, PRIOS.map(p => ({value:p.k, label:p.label, icon:flagSvg(p.k), sel:(t.priority||'') === p.k})), v => { if ((t.priority||'') !== v) setField(t.id, {priority:v}, `Prioriteit: ${prioLabel(v)}`, `Prioriteit: ${prioLabel(v)}`); }); return; }
+  const am = e.target.closest('[data-assign-menu]');
+  if (am){ const t = Store.get(am.dataset.assignMenu); if (t) openMenu(am, ['pap','eng',''].map(k => ({value:k, label:k ? personName(k) : 'Niemand', icon:avatar(k,true), sel:(t.assignee||'') === k})), v => { if ((t.assignee||'') !== v) setField(t.id, {assignee:v}, `Voor: ${personName(v)}`, `Toegewezen aan ${personName(v)}`); }); return; }
+  const tg = e.target.closest('[data-toggle]');
+  if (tg){ const k = tg.dataset.toggle; settings.collapsed[k] = !settings.collapsed[k]; if (settings.collapsed[k] && comp.open && comp.status === k) comp.open = false; saveSettings(); renderList(); return; }
+  const add = e.target.closest('[data-add]');
+  if (add){ openComposer({status:add.dataset.add}); return; }
+  const ad = e.target.closest('[data-add-date]');
+  if (ad){ openComposer({status:'todo', date:ad.dataset.addDate}); return; }
+});
+
+// Klik op lege plek in een dag = nieuwe opdracht op die dag (en tijd, als je in een tijdblok klikt)
+weekEl.addEventListener('click', e => {
+  if (Date.now() < suppressClick) return;
+  if (e.target.closest('.acard, button')) return;
+  const col = e.target.closest('.daycol'); if (!col || !e.target.closest('.day-body')) return;
+  const g = e.target.closest('.tgroup');
+  openComposer({status:'todo', date:col.dataset.date, time: g ? g.dataset.time : undefined});
+});
+
+/* ---------- type- en tandkleurkeuze ---------- */
+function typeChipsHtml(name){
+  return Object.entries(TYPES).map(([k,v]) => `<label class="tchip t-${k}"><input type="radio" name="${name}" value="${k}"><i class="sw"></i>${v.label}</label>`).join('');
+}
+function shadeChipsHtml(name){
+  return SHADES.map(([s,c]) => `<label class="schip"><input type="radio" name="${name}" value="${s}"><i style="background:${c}"></i>${s}</label>`).join('')
+    + `<label class="schip"><input type="radio" name="${name}" value="custom"><i style="background:repeating-linear-gradient(45deg,#ccc 0 3px,#fff 3px 6px)"></i>Anders</label>`;
+}
+F('cTypes').innerHTML = typeChipsHtml('ctype');
+F('cShades').innerHTML = shadeChipsHtml('cshade');
+F('fTypes').innerHTML = typeChipsHtml('ftype');
+F('fShades').innerHTML = shadeChipsHtml('fshade');
+F('fStatus').innerHTML = STATUSES.map(s => `<label><input type="radio" name="fstatus" value="${s.k}">${statusIcon(s.k)}${s.label}</label>`).join('');
+const timeOpts = '<option value="">Geen tijd (einde dag)</option>' + TIMES.map(t => `<option value="${t}">${t}</option>`).join('');
+const assignOpts = () => `<option value="eng">${esc(personName('eng'))}</option><option value="pap">${esc(personName('pap'))}</option><option value="">Niemand</option>`;
+const prioOpts = PRIOS.map(p => `<option value="${p.k}">${p.label}</option>`).join('');
+const radioVal = (root, name) => (root.querySelector(`input[name="${name}"]:checked`) || {}).value || '';
+const setRadio = (root, name, v) => root.querySelectorAll(`input[name="${name}"]`).forEach(r => r.checked = r.value === v);
+function ensureOption(sel, val){ if (val && ![...sel.options].some(o => o.value === val)){ const o = document.createElement('option'); o.value = val; o.textContent = val; sel.appendChild(o); } sel.value = val; }
+
+function patientMap(){ const m = {}; [...Store.tasks].sort((a,b) => (a.createdAt||'').localeCompare(b.createdAt||'')).forEach(t => { if (t.patientNr) m[t.patientNr] = t.patientName || m[t.patientNr] || ''; }); return m; }
+function fillPatientList(){ F('patientList').innerHTML = Object.entries(patientMap()).map(([nr,nm]) => `<option value="${esc(nr)}">${esc(nm)}</option>`).join(''); }
+function autoName(nrEl, nameEl){ nrEl.addEventListener('input', () => { const m = patientMap(), v = nrEl.value.trim(); if (m[v] && !nameEl.value.trim()) nameEl.value = m[v]; }); }
+autoName(F('cNr'), F('cName')); autoName(F('fNr'), F('fName'));
+
+function validate({type, custom, shade, shadeCustom, nr, name, date}){
+  const errs = [];
+  if (!type) errs.push('Kies een opdrachttype.');
+  if (type === 'anders' && !custom) errs.push('Vul een omschrijving in bij "Anders".');
+  if (type === 'imm'){ if (!shade) errs.push('Kies een tandkleur.'); else if (shade === 'custom' && !shadeCustom) errs.push('Vul de andere tandkleur in.'); }
+  if (type && type !== 'anders' && !nr && !name) errs.push('Vul een patiëntnummer of naam in.');
+  if (!date) errs.push('Kies op welke dag het klaar moet zijn.');
+  return errs;
+}
+
+/* ---------- aanmaakblok ---------- */
+function syncComposer(){
+  const type = radioVal(composer,'ctype'), shade = radioVal(composer,'cshade');
+  F('cCustom').hidden = type !== 'anders';
+  F('cShadeRow').hidden = type !== 'imm';
+  F('cShadeCustom').hidden = shade !== 'custom';
+  F('cDays').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.d === F('cDate').value)));
+}
+function openComposer(o){
+  closeMenu();
+  const wasOpen = comp.open;
+  comp = {open:true, status:o.status || 'todo'};
+  const s = STATUSES.find(x => x.k === comp.status);
+  F('cStatusLbl').className = `spill s-${s.k}`; F('cStatusLbl').innerHTML = `<i></i>${s.label}`;
+  if (!wasOpen || o.date){
+    composer.reset();
+    F('cTime').innerHTML = timeOpts; F('cAssignee').innerHTML = assignOpts(); F('cPrio').innerHTML = prioOpts;
+    F('cDate').value = o.date || nextWorkday();
+    ensureOption(F('cTime'), o.time !== undefined ? o.time : settings.lastTime);
+    F('cAssignee').value = settings.lastAssignee ?? 'eng';
+    F('cPrio').value = '';
+  }
+  F('cDays').innerHTML = days().slice(0,5).map(d => `<button type="button" data-d="${d}" title="${fmtDay(d)}">${DOW[dowIdx(parseYmd(d))]}</button>`).join('');
+  F('cErr').hidden = true;
+  fillPatientList();
+  renderList(); syncComposer();
+  requestAnimationFrame(() => {
+    composer.scrollIntoView({block:'nearest', behavior:'smooth'});
+    const first = composer.querySelector('input[name="ctype"]:checked') || composer.querySelector('input[name="ctype"]');
+    first.focus({preventScroll:true});
+  });
+}
+function closeComposer(){ comp.open = false; renderList(); }
+composer.addEventListener('change', syncComposer);
+F('cDate').addEventListener('input', syncComposer);
+F('cDays').addEventListener('click', e => { const b = e.target.closest('button'); if (b){ F('cDate').value = b.dataset.d; syncComposer(); } });
+F('cCancel').addEventListener('click', closeComposer);
+composer.addEventListener('keydown', e => { if (e.key === 'Escape'){ e.preventDefault(); closeComposer(); } if (e.key === 'Enter' && e.target.matches('input[type=radio]')){ e.preventDefault(); composer.requestSubmit(); } });
+composer.addEventListener('submit', e => {
+  e.preventDefault();
+  const v = {type:radioVal(composer,'ctype'), custom:F('cCustom').value.trim(), shade:radioVal(composer,'cshade'), shadeCustom:F('cShadeCustom').value.trim(),
+    nr:F('cNr').value.trim(), name:F('cName').value.trim(), date:F('cDate').value};
+  const errs = validate(v);
+  if (errs.length){ F('cErr').textContent = errs.join(' '); F('cErr').hidden = false; return; }
+  const now = nowIso();
+  const t = {id:uid(), createdAt:now, createdBy:settings.me, history:[], status:comp.status,
+    type:v.type, typeCustom: v.type === 'anders' ? v.custom : '', shade: v.type === 'imm' ? v.shade : '', shadeCustom: v.type === 'imm' && v.shade === 'custom' ? v.shadeCustom : '',
+    patientNr:v.nr, patientName:v.name, dueDate:v.date, dueTime:F('cTime').value, assignee:F('cAssignee').value, priority:F('cPrio').value, note:''};
+  settings.lastTime = t.dueTime; settings.lastAssignee = t.assignee; saveSettings();
+  comp.open = false;
+  if (!days().includes(t.dueDate)) weekStart = mondayOf(parseYmd(t.dueDate));
+  commit(t, 'Aangemaakt', `Opdracht toegevoegd: klaar ${dueLabel(t).toLowerCase()}`);
+});
+
+/* ---------- bewerken ---------- */
+let editingId = null, delArmed = 0;
+function syncEditor(){
+  const type = radioVal(edForm,'ftype'), shade = radioVal(edForm,'fshade');
+  F('fCustomWrap').hidden = type !== 'anders';
+  F('fShadeWrap').hidden = type !== 'imm';
+  F('fShadeCustom').hidden = shade !== 'custom';
+}
+edForm.addEventListener('change', syncEditor);
+function openEditor(id){
+  const t = Store.get(id); if (!t) return;
+  closeMenu();
+  editingId = id; delArmed = 0;
+  F('edTitle').textContent = t.deleted ? 'Verwijderde opdracht' : (t.patientNr ? `${typeLabel(t)} · ${t.patientNr}` : typeLabel(t));
+  setRadio(edForm,'fstatus', t.status); setRadio(edForm,'ftype', t.type); setRadio(edForm,'fshade', t.shade || '');
+  F('fCustom').value = t.typeCustom || ''; F('fShadeCustom').value = t.shadeCustom || '';
+  F('fNr').value = t.patientNr || ''; F('fName').value = t.patientName || '';
+  F('fDate').value = t.dueDate || '';
+  F('fTime').innerHTML = timeOpts; ensureOption(F('fTime'), t.dueTime || '');
+  F('fAssignee').innerHTML = assignOpts(); F('fAssignee').value = t.assignee || '';
+  F('fPrio').innerHTML = prioOpts; F('fPrio').value = t.priority || '';
+  F('fNote').value = t.note || '';
+  F('fErr').hidden = true;
+  const del = F('delBtn'); del.classList.remove('armed'); del.textContent = t.deleted ? 'Terugzetten' : 'Verwijderen';
+  let m = `Aangemaakt <b>${fmtStamp(t.createdAt)}</b> door <b>${esc(personName(t.createdBy))}</b>`;
+  if (t.updatedAt && t.updatedAt !== t.createdAt) m += `<br>Laatst gewijzigd ${fmtStamp(t.updatedAt)}`;
+  if (t.completedAt) m += `<br>Klaar gemeld ${fmtStamp(t.completedAt)}`;
+  if (t.example) m += '<br>Voorbeeldopdracht';
+  F('edMeta').innerHTML = m;
+  F('histList').innerHTML = (t.history || []).slice().reverse().map(h => `<li><span>${fmtStampShort(h.at)}</span>${esc(h.what)} · ${esc(personName(h.by))}</li>`).join('') || '<li>Geen geschiedenis</li>';
+  fillPatientList(); syncEditor();
+  editor.showModal();
+}
+edForm.addEventListener('submit', e => {
+  e.preventDefault();
+  const v = {type:radioVal(edForm,'ftype'), custom:F('fCustom').value.trim(), shade:radioVal(edForm,'fshade'), shadeCustom:F('fShadeCustom').value.trim(),
+    nr:F('fNr').value.trim(), name:F('fName').value.trim(), date:F('fDate').value};
+  const errs = validate(v);
+  if (errs.length){ F('fErr').textContent = errs.join(' '); F('fErr').hidden = false; return; }
+  const before = Store.get(editingId), t = clone(before);
+  const status = radioVal(edForm,'fstatus') || t.status;
+  Object.assign(t, {type:v.type, typeCustom: v.type === 'anders' ? v.custom : '', shade: v.type === 'imm' ? v.shade : '', shadeCustom: v.type === 'imm' && v.shade === 'custom' ? v.shadeCustom : '',
+    patientNr:v.nr, patientName:v.name, dueDate:v.date, dueTime:F('fTime').value, assignee:F('fAssignee').value, priority:F('fPrio').value, note:F('fNote').value.trim(), status});
+  if (status !== before.status) t.completedAt = status === 'done' ? nowIso() : null;
+  const ch = [...new Set(Object.keys(FIELD_NAMES).filter(k => JSON.stringify(before[k] ?? '') !== JSON.stringify(t[k] ?? '')).map(k => FIELD_NAMES[k]))];
+  editor.close();
+  if (!ch.length) return;
+  if (t.dueDate && !days().includes(t.dueDate)) weekStart = mondayOf(parseYmd(t.dueDate));
+  commit(t, 'Gewijzigd: ' + ch.join(', '), 'Opdracht bijgewerkt');
+});
+F('delBtn').addEventListener('click', () => {
+  const t = clone(Store.get(editingId)); if (!t) return;
+  if (t.deleted){ t.deleted = false; t.deletedAt = null; editor.close(); commit(t, 'Teruggezet', 'Opdracht teruggezet'); return; }
+  if (Date.now() < delArmed){ t.deleted = true; t.deletedAt = nowIso(); editor.close(); commit(t, 'Verwijderd', 'Opdracht verwijderd'); return; }
+  delArmed = Date.now() + 4000;
+  const b = F('delBtn'); b.textContent = 'Nogmaals klikken om te verwijderen'; b.classList.add('armed');
+  setTimeout(() => { if (Date.now() >= delArmed){ b.textContent = 'Verwijderen'; b.classList.remove('armed'); } }, 4100);
+});
+
+/* ---------- slepen ----------
+   Kaart of rij naar een andere dag = nieuwe einddatum (op een tijdblok: ook die tijd).
+   Naar een statusgroep in de lijst = nieuwe status. */
+let press = null, suppressClick = 0;
+function startPress(e, el){
+  if (e.pointerType === 'mouse' && e.button !== 0) return;
+  if (e.target.closest('button, a, input, select')) return;
+  const r = el.getBoundingClientRect();
+  press = {id:el.dataset.id, el, ptype:e.pointerType, x0:e.clientX, y0:e.clientY, x:e.clientX, y:e.clientY, offX:Math.min(e.clientX - r.left, 200), offY:Math.min(e.clientY - r.top, 30), active:false};
+  if (e.pointerType === 'mouse') e.preventDefault();
+  else press.timer = setTimeout(activate, 300);
+  window.addEventListener('pointermove', onMove, {passive:false});
+  window.addEventListener('pointerup', onUp);
+  window.addEventListener('pointercancel', onCancel);
+}
+document.addEventListener('touchmove', e => { if (press && press.active) e.preventDefault(); }, {passive:false});
+weekEl.addEventListener('pointerdown', e => { const el = e.target.closest('.acard'); if (el) startPress(e, el); });
+listEl.addEventListener('pointerdown', e => { const el = e.target.closest('.lrow'); if (el) startPress(e, el); });
+
+function activate(){
+  const p = press; if (!p || p.active) return;
+  p.active = true; clearTimeout(p.timer); closeMenu();
+  try { navigator.vibrate && navigator.vibrate(10); } catch(_){}
+  document.body.classList.add('dragging');
+  const tmp = document.createElement('div'); tmp.innerHTML = acardHtml(Store.get(p.id));
+  p.ghost = tmp.firstElementChild; p.ghost.classList.add('ghost'); p.ghost.removeAttribute('tabindex');
+  if (p.offX > 200) p.offX = 30;
+  document.body.appendChild(p.ghost);
+  p.el.classList.add('lifted');
+  loop();
+}
+function loop(){ if (!press || !press.active) return; update(); press.raf = requestAnimationFrame(loop); }
+function clearDrop(){ document.querySelectorAll('.drop-over').forEach(x => x.classList.remove('drop-over')); }
+function update(){
+  const p = press;
+  p.ghost.style.transform = `translate(${p.x - p.offX}px, ${p.y - p.offY}px)`;
+  const under = document.elementFromPoint(p.x, p.y);
+  clearDrop(); p.target = null;
+  if (!under) return;
+  const col = under.closest('.daycol'), grp = under.closest('.sgroup');
+  if (col){
+    const tg = under.closest('.tgroup');
+    p.target = {kind:'day', date:col.dataset.date, time: tg ? tg.dataset.time : undefined};
+    (tg || col).classList.add('drop-over');
+  } else if (grp){
+    p.target = {kind:'status', status:grp.dataset.status};
+    grp.classList.add('drop-over');
+  }
+  // automatisch scrollen bij de randen
+  const sc = under.closest('.day-body') || (under.closest('.list-scroll'));
+  if (sc){ const r = sc.getBoundingClientRect(); if (p.y < r.top + 36) sc.scrollTop -= 8; else if (p.y > r.bottom - 36) sc.scrollTop += 8; }
+  if (col){ const r = weekEl.getBoundingClientRect(); if (p.x < r.left + 30) weekEl.scrollLeft -= 8; else if (p.x > r.right - 30) weekEl.scrollLeft += 8; }
+}
+function onMove(e){
+  const p = press; if (!p) return;
+  p.x = e.clientX; p.y = e.clientY;
+  if (!p.active){
+    const dist = Math.hypot(p.x - p.x0, p.y - p.y0);
+    if (p.ptype === 'mouse'){ if (dist > 5) activate(); }
+    else if (dist > 9){ clearTimeout(p.timer); endListeners(); press = null; }
+    return;
+  }
+  e.preventDefault();
+}
+function endListeners(){ window.removeEventListener('pointermove', onMove); window.removeEventListener('pointerup', onUp); window.removeEventListener('pointercancel', onCancel); }
+function cleanup(p){ cancelAnimationFrame(p.raf); document.body.classList.remove('dragging'); clearDrop(); if (p.ghost) p.ghost.remove(); p.el.classList.remove('lifted'); }
+function onCancel(){ const p = press; if (!p) return; clearTimeout(p.timer); endListeners(); press = null; if (p.active){ cleanup(p); render(); } }
+function onUp(){
+  const p = press; if (!p) return;
+  clearTimeout(p.timer); endListeners();
+  if (!p.active){ press = null; openEditor(p.id); return; }
+  cleanup(p); press = null; suppressClick = Date.now() + 400;
+  const t = clone(Store.get(p.id)), tg = p.target;
+  if (tg && tg.kind === 'day'){
+    const time = tg.time !== undefined ? tg.time : (t.dueTime || '');
+    if (t.dueDate !== tg.date || (t.dueTime || '') !== time){
+      t.dueDate = tg.date; t.dueTime = time;
+      commit(t, `Klaar op gewijzigd naar ${fmtDay(t.dueDate)}${time ? ' ' + time : ''}`, `Verplaatst: klaar ${dueLabel(t).toLowerCase()}`);
+      return;
+    }
+  } else if (tg && tg.kind === 'status' && tg.status !== t.status){
+    setStatus(t.id, tg.status); return;
+  }
+  render();
+}
+
+document.addEventListener('keydown', e => {
+  const el = e.target.closest && e.target.closest('.acard, .lrow');
+  if (el && e.target === el && (e.key === 'Enter' || e.key === ' ')){ e.preventDefault(); openEditor(el.dataset.id); }
+});
+
+/* ---------- verdeling boven/onder ---------- */
+const work = F('work'), splitter = F('splitter');
+function applySplit(){ work.style.setProperty('--topfr', settings.split + 'fr'); work.style.setProperty('--botfr', (1 - settings.split) + 'fr'); }
+splitter.addEventListener('pointerdown', e => {
+  e.preventDefault(); splitter.setPointerCapture(e.pointerId);
+  const r = work.getBoundingClientRect();
+  const mv = ev => { settings.split = Math.min(.8, Math.max(.2, (ev.clientY - r.top) / r.height)); applySplit(); };
+  const up = () => { splitter.removeEventListener('pointermove', mv); splitter.removeEventListener('pointerup', up); saveSettings(); };
+  splitter.addEventListener('pointermove', mv); splitter.addEventListener('pointerup', up);
+});
+splitter.addEventListener('dblclick', () => { settings.split = .5; applySplit(); saveSettings(); });
+
+/* ---------- archief ---------- */
+let arcFilter = 'all';
+function renderArchive(){
+  const q = F('arcSearch').value.trim().toLowerCase();
+  let list = Store.tasks.filter(t => arcFilter === 'deleted' ? !!t.deleted : !t.deleted && (arcFilter === 'all' || (arcFilter === 'done' ? t.status === 'done' : t.status !== 'done')));
+  if (q) list = list.filter(t => [t.patientNr, t.patientName, typeLabel(t), shadeLabel(t), t.note].join(' ').toLowerCase().includes(q));
+  list.sort((a,b) => (b.createdAt||'').localeCompare(a.createdAt||''));
+  F('arcCount').textContent = `${list.length} van ${Store.tasks.length}`;
+  F('arcBody').innerHTML = list.length ? list.map(t => `<tr data-id="${esc(t.id)}" tabindex="0">
+      <td class="mono">${fmtStampShort(t.createdAt)}<small>door ${esc(personName(t.createdBy))}</small></td>
+      <td class="t-${esc(t.type)}"><i class="sw" style="margin-right:7px"></i>${esc(typeLabel(t))}</td>
+      <td class="mono">${esc(t.patientNr || '—')}</td>
+      <td>${esc(t.patientName || '—')}</td>
+      <td class="mono">${esc(shadeLabel(t) || '—')}</td>
+      <td>${t.dueDate ? `${fmtDay(t.dueDate)} ${parseYmd(t.dueDate).getFullYear()}${t.dueTime ? ` <span class="mono muted">${t.dueTime}</span>` : ''}` : '—'}</td>
+      <td>${esc(personName(t.assignee))}</td>
+      <td><span class="st">${t.deleted ? '<span class="muted">Verwijderd</span>' : statusIcon(t.status) + statusLabel(t.status)}</span></td></tr>`).join('')
+    : `<tr><td colspan="8" class="muted" style="padding:28px 12px;text-align:center">Geen opdrachten gevonden.</td></tr>`;
+}
+F('archiveBtn').addEventListener('click', () => { renderArchive(); arcDlg.showModal(); setTimeout(() => F('arcSearch').focus(), 30); });
+F('arcSearch').addEventListener('input', renderArchive);
+F('arcFilter').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; arcFilter = b.dataset.f; F('arcFilter').querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); renderArchive(); });
+function openFromArchive(id){ const t = Store.get(id); if (!t) return; arcDlg.close(); if (t.dueDate){ weekStart = mondayOf(parseYmd(t.dueDate)); render(); } openEditor(id); }
+F('arcBody').addEventListener('click', e => { const tr = e.target.closest('tr[data-id]'); if (tr) openFromArchive(tr.dataset.id); });
+F('arcBody').addEventListener('keydown', e => { const tr = e.target.closest('tr[data-id]'); if (tr && e.key === 'Enter') openFromArchive(tr.dataset.id); });
+F('exportBtn').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify({app:'labplanner', version:2, exportedAt:nowIso(), tasks:Store.tasks}, null, 2)], {type:'application/json'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `labplanner-backup-${todayStr()}.json`;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  toast('Back-up gedownload');
+});
+F('importFile').addEventListener('change', async e => {
+  const f = e.target.files[0]; e.target.value = ''; if (!f) return;
+  try {
+    const d = JSON.parse(await f.text()); if (!d || !Array.isArray(d.tasks)) throw new Error();
+    let added = 0, updated = 0; const changed = [];
+    for (const t of d.tasks){ if (!t || !t.id) continue; const cur = Store.get(t.id); if (!cur){ Store.tasks.push(t); changed.push(t); added++; } else if ((t.updatedAt||'') > (cur.updatedAt||'')){ Store.replace(t); changed.push(t); updated++; } }
+    Store.save(); Sync.push(changed.filter(t => !t.example)); render(); toast(`Back-up teruggezet: ${added} nieuw, ${updated} bijgewerkt`);
+  } catch(_){ toast('Dit bestand is geen geldige Labplanner-back-up.'); }
+});
+F('importLbl').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); F('importFile').click(); } });
+
+/* ---------- instellingen & bediening ---------- */
+F('settingsBtn').addEventListener('click', async () => {
+  F('sPap').value = settings.names.pap; F('sEng').value = settings.names.eng; F('sWeekend').checked = settings.weekend;
+  F('sOnline').hidden = !Sync.client || Sync.state === 'login';
+  if (Sync.client){ const {data} = await Sync.client.auth.getSession(); F('sOnlineTxt').textContent = data.session ? `Ingelogd als ${data.session.user.email}` : ''; }
+  setDlg.showModal();
+});
+F('setForm').addEventListener('submit', e => { e.preventDefault(); settings.names.pap = F('sPap').value.trim() || DEFAULT_NAMES.pap; settings.names.eng = F('sEng').value.trim() || DEFAULT_NAMES.eng; settings.weekend = F('sWeekend').checked; saveSettings(); setDlg.close(); render(); toast('Instellingen opgeslagen'); });
+document.querySelectorAll('dialog:not(#loginDlg)').forEach(d => d.addEventListener('click', e => { if (e.target === d || e.target.closest('[data-close]')) d.close(); }));
+F('loginDlg').addEventListener('cancel', e => e.preventDefault());
+F('loginForm').addEventListener('submit', async e => {
+  e.preventDefault();
+  const email = F('lEmail').value.trim(), password = F('lPass').value;
+  if (!email || !password){ F('lErr').textContent = 'Vul je e-mailadres en wachtwoord in.'; F('lErr').hidden = false; return; }
+  F('lBtn').disabled = true; F('lBtn').textContent = 'Bezig…';
+  const {error} = await Sync.client.auth.signInWithPassword({email, password});
+  F('lBtn').disabled = false; F('lBtn').textContent = 'Inloggen';
+  if (error){ F('lErr').textContent = /invalid/i.test(error.message) ? 'E-mailadres of wachtwoord klopt niet.' : `Inloggen lukt niet: ${error.message}`; F('lErr').hidden = false; return; }
+  F('lPass').value = '';
+  F('loginDlg').close();
+  await Sync.connect();
+  toast('Ingelogd. Je ziet nu de gedeelde planner.');
+});
+F('logoutBtn').addEventListener('click', async () => { setDlg.close(); await Sync.client.auth.signOut(); });
+document.querySelectorAll('.who button').forEach(b => b.addEventListener('click', () => { settings.me = b.dataset.who; saveSettings(); render(); toast(`Je werkt nu als ${personName(settings.me)}`); }));
+document.querySelectorAll('[data-scope]').forEach(b => b.addEventListener('click', () => { settings.scope = b.dataset.scope; saveSettings(); document.querySelectorAll('[data-scope]').forEach(x => x.setAttribute('aria-pressed', String(x === b))); renderList(); }));
+document.querySelectorAll('[data-scope]').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.scope === settings.scope)));
+F('listSearch').addEventListener('input', renderList);
+F('overChip').addEventListener('click', () => { const first = Store.live().filter(t => dueState(t) === 'over').sort(byDue)[0]; if (first){ weekStart = mondayOf(parseYmd(first.dueDate)); render(); } });
+F('prevWeek').addEventListener('click', () => { weekStart = addDays(weekStart, -7); render(); });
+F('nextWeek').addEventListener('click', () => { weekStart = addDays(weekStart, 7); render(); });
+F('todayBtn').addEventListener('click', () => { weekStart = mondayOf(new Date()); render(); });
+F('newBtn').addEventListener('click', () => openComposer({status:'todo'}));
+F('clearExamples').addEventListener('click', () => { Store.removeHard(t => t.example); toast('Voorbeelden gewist. De planner is leeg en klaar voor gebruik.'); });
+document.addEventListener('keydown', e => {
+  if (document.querySelector('dialog[open]') || /^(INPUT|TEXTAREA|SELECT)$/.test(e.target.tagName) || e.ctrlKey || e.metaKey || e.altKey) return;
+  if (e.key === 'Escape') closeMenu();
+  else if (e.key === 'n' || e.key === 'N'){ e.preventDefault(); openComposer({status:'todo'}); }
+  else if (e.key === 'ArrowLeft' && !e.target.closest('.lrow, .acard')){ weekStart = addDays(weekStart,-7); render(); }
+  else if (e.key === 'ArrowRight' && !e.target.closest('.lrow, .acard')){ weekStart = addDays(weekStart,7); render(); }
+  else if (e.key === 't' || e.key === 'T'){ weekStart = mondayOf(new Date()); render(); }
+});
+window.addEventListener('storage', e => { if (e.key === Store.KEY && !comp.open && !Sync.client){ Store.init(); render(); } });
+setInterval(() => { if (!press && pop.hidden && !document.querySelector('dialog[open]') && !comp.open) render(); }, 60000);
+
+let toastTimer;
+function toast(msg, undo){
+  const el = F('toast');
+  el.innerHTML = `<span>${esc(msg)}</span>${undo ? '<button type="button">Ongedaan maken</button>' : ''}`;
+  el.hidden = false;
+  if (undo) el.querySelector('button').onclick = () => { el.hidden = true; undo(); };
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => el.hidden = true, undo ? 6000 : 2600);
+}
+
+/* ---------- voorbeelden bij de eerste keer ---------- */
+function seedExamples(){
+  const mon = mondayOf(new Date()), d = i => ymd(addDays(mon, i)), now = Date.now();
+  const mk = (o, ageH) => {
+    const createdAt = new Date(now - ageH*3600e3).toISOString(), by = o.createdBy || 'pap';
+    return Object.assign({id:uid(), status:'todo', type:'', typeCustom:'', shade:'', shadeCustom:'', patientNr:'', patientName:'', note:'', dueDate:'', dueTime:'', assignee:'eng', priority:'',
+      example:true, createdBy:by, createdAt, updatedAt:createdAt, history:[{at:createdAt, by, what:'Aangemaakt (voorbeeld)'}]}, o);
+  };
+  Store.tasks = [
+    mk({type:'steg', patientNr:'10450', patientName:'R. Smit (voorbeeld)', status:'busy', dueDate:d(1), dueTime:'09:00', priority:'high', note:'Scannen en frezen, steg op 4'}, 60),
+    mk({type:'tryin', patientNr:'10477', patientName:'H. de Jong (voorbeeld)', dueDate:d(1), dueTime:'09:00'}, 40),
+    mk({type:'lepel', patientNr:'10491', patientName:'S. Meijer (voorbeeld)', dueDate:d(1), dueTime:'09:00'}, 30),
+    mk({type:'imm', shade:'A3', patientNr:'10482', patientName:'M. Bakker (voorbeeld)', status:'busy', dueDate:d(2), dueTime:'12:00'}, 50),
+    mk({type:'base', patientNr:'10465', patientName:'A. Visser (voorbeeld)', status:'wait', dueDate:d(3), dueTime:'16:00', note:'Wacht op afdruk van TPP Meurers'}, 20),
+    mk({type:'imm', shade:'custom', shadeCustom:'B2', patientNr:'10488', patientName:'K. Mulder (voorbeeld)', dueDate:d(4), dueTime:'09:00', priority:'urgent'}, 10),
+    mk({type:'anders', typeCustom:'Onderhoud freesmachine', dueDate:d(4), dueTime:'', createdBy:'eng', priority:'low'}, 5),
+    mk({type:'tryin', patientNr:'10470', patientName:'P. Janssen (voorbeeld)', dueDate:d(-3), dueTime:'10:00'}, 120),
+    mk({type:'base', patientNr:'10495', patientName:'L. de Boer (voorbeeld)', status:'done', completedAt:new Date(now-20*3600e3).toISOString(), dueDate:d(0), dueTime:'09:00'}, 72)
+  ];
+  Store.save();
+}
+
+/* ---------- start ---------- */
+if (!Store.init() && !ONLINE.url) seedExamples();
+if (ONLINE.url) Store.tasks = Store.tasks.filter(t => !t.example);
+applySplit();
+render();
+Sync.start();
+})();
+</script>
+</body>
+</html>
