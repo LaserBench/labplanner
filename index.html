@@ -1170,7 +1170,7 @@ function ensureOption(sel, val){ if (val && ![...sel.options].some(o => o.value 
 
 /* ---------- opdrachtdetails per type ----------
    Afdruklepels en pasprotheses: meerdere patiënten, elk met boven/onder/beide.
-   Base en immediaat: boven/onder/beide, per boog volledig of partieel; base per boog incl. uitsparing steg.
+   Base en immediaat: boven/onder/beide, per kaak volledig of partieel; base per kaak incl. uitsparing steg.
    Steg: normaal of gesplitst (vanaf 4 implantaten) en aantal implantaten. Scannen: incl. ontwerp steg. */
 function seg(field, val, opts){
   return `<div class="dseg" data-field="${field}" role="group">${opts.map(([v,l,dis]) => `<button type="button" data-v="${v}" aria-pressed="${String(v) === String(val)}"${dis ? ' disabled' : ''}>${l}</button>`).join('')}</div>`;
@@ -1182,7 +1182,7 @@ function ptRowHtml(p, multi){
   return `<div class="pt-row">
     <div class="pt-f"><span class="mini">Patiëntnummer</span><input type="text" class="pt-nr nr-input" aria-label="Patiëntnummer" value="${esc(p.nr||'')}" autocomplete="off" spellcheck="false"></div>
     <div class="pt-f grow"><span class="mini">Patiëntnaam</span><input type="text" class="pt-name" aria-label="Patiëntnaam" value="${esc(p.name||'')}" autocomplete="off"></div>
-    ${multi ? `<div class="pt-f"><span class="mini">Boog</span>${seg('arch', archOf(p), ARCH_OPTS)}</div><button type="button" class="pt-rm" aria-label="Patiënt verwijderen" title="Patiënt verwijderen">×</button>` : ''}
+    ${multi ? `<div class="pt-f"><span class="mini">Kaak</span>${seg('arch', archOf(p), ARCH_OPTS)}</div><button type="button" class="pt-rm" aria-label="Patiënt verwijderen" title="Patiënt verwijderen">×</button>` : ''}
   </div>`;
 }
 function archRowHtml(type, a, x){
@@ -1206,7 +1206,7 @@ function detailsHtml(type, d, pfx){
   if (ARCH_TYPES.has(type)){
     const ar = d.arches || {};
     const sel = ar.boven && ar.onder ? 'beide' : ar.boven ? 'boven' : ar.onder ? 'onder' : '';
-    h += `<div class="dsec d-arches"><span class="mini">${type === 'base' ? 'Welke base' : 'Welke boog'}</span>${seg('archsel', sel, ARCH_OPTS)}<div class="arch-rows">${['boven','onder'].filter(a => sel === 'beide' || sel === a).map(a => archRowHtml(type, a, ar[a])).join('')}</div></div>`;
+    h += `<div class="dsec d-arches"><span class="mini">${type === 'base' ? 'Welke base' : 'Welke kaak'}</span>${seg('archsel', sel, ARCH_OPTS)}<div class="arch-rows">${['boven','onder'].filter(a => sel === 'beide' || sel === a).map(a => archRowHtml(type, a, ar[a])).join('')}</div></div>`;
   }
   if (type === 'imm') h += shadeHtml(pfx, d);
   if (type === 'steg'){
