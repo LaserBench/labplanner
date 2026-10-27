@@ -162,7 +162,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .acard.done{opacity:.6}
 .acard.done .ac-pt{text-decoration:line-through}
 .acard.lifted,.lrow.lifted{opacity:.3}
-.ghost{position:fixed;left:0;top:0;z-index:1000;pointer-events:none;width:230px;box-shadow:0 14px 40px rgba(0,0,0,.28);opacity:.96}
+.drag-ghost{position:fixed;left:0;top:0;z-index:1000;pointer-events:none;width:230px;box-shadow:0 14px 40px rgba(0,0,0,.28);opacity:.96}
 
 .chip{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;border-radius:5px;padding:1px 6px;background:var(--surface);border:1px solid var(--line);white-space:nowrap}
 .chip.shade{font-family:var(--f-mono)}
@@ -1086,7 +1086,7 @@ function activate(){
   try { navigator.vibrate && navigator.vibrate(10); } catch(_){}
   document.body.classList.add('dragging');
   const tmp = document.createElement('div'); tmp.innerHTML = acardHtml(Store.get(p.id));
-  p.ghost = tmp.firstElementChild; p.ghost.classList.add('ghost'); p.ghost.removeAttribute('tabindex');
+  p.ghost = tmp.firstElementChild; p.ghost.classList.add('drag-ghost'); p.ghost.removeAttribute('tabindex');
   if (p.offX > 200) p.offX = 30;
   document.body.appendChild(p.ghost);
   p.el.classList.add('lifted');
