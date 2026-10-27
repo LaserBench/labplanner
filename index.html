@@ -18,6 +18,7 @@
   --s-busy:#2f6fe4; --s-todo:#d64545; --s-wait:#8a95a0; --s-done:#1f9d63;
   --p-urgent:#d64545; --p-high:#e08a00; --p-normal:#2f6fe4; --p-low:#8a95a0;
   --av-pap:#b4532a; --av-eng:#17806f;
+  --t-scan:#4f7d00; --t-scan-bg:#ecf5d6;
   --t-tryin:#6a4bc4; --t-tryin-bg:#ece7fb;
   --t-base:#c0466a;  --t-base-bg:#fae3ea;
   --t-imm:#9a6a0e;   --t-imm-bg:#f8edd6;
@@ -39,6 +40,7 @@
     --s-busy:#4f8bff; --s-todo:#f06464; --s-wait:#7d8a96; --s-done:#3cc282;
     --p-urgent:#f06464; --p-high:#f0a830; --p-normal:#4f8bff; --p-low:#7d8a96;
     --av-pap:#d9784d; --av-eng:#3fb8a2;
+    --t-scan:#b4e05a; --t-scan-bg:#232f14;
     --t-tryin:#b6a2ff; --t-tryin-bg:#272040;
     --t-base:#ff8fb0;  --t-base-bg:#3a1f29;
     --t-imm:#f1c46a;   --t-imm-bg:#342914;
@@ -57,6 +59,7 @@
   --s-busy:#4f8bff; --s-todo:#f06464; --s-wait:#7d8a96; --s-done:#3cc282;
   --p-urgent:#f06464; --p-high:#f0a830; --p-normal:#4f8bff; --p-low:#7d8a96;
   --av-pap:#d9784d; --av-eng:#3fb8a2;
+  --t-scan:#b4e05a; --t-scan-bg:#232f14;
   --t-tryin:#b6a2ff; --t-tryin-bg:#272040;
   --t-base:#ff8fb0;  --t-base-bg:#3a1f29;
   --t-imm:#f1c46a;   --t-imm-bg:#342914;
@@ -75,6 +78,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
 :focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 
+.t-scan{--c:var(--t-scan);--cb:var(--t-scan-bg)}
 .t-tryin{--c:var(--t-tryin);--cb:var(--t-tryin-bg)}
 .t-base{--c:var(--t-base);--cb:var(--t-base-bg)}
 .t-imm{--c:var(--t-imm);--cb:var(--t-imm-bg)}
@@ -564,6 +568,7 @@ const ONLINE = {
 
 /* ---------- vaste gegevens ---------- */
 const TYPES = {
+  scan:   {label:'Scannen'},
   tryin:  {label:'Printen try-in'},
   base:   {label:'Frezen base'},
   imm:    {label:'Frezen immediaat'},
@@ -666,6 +671,7 @@ const Sync = {
     this.state = 'online';
     if (up.length) await this.push(up);
     await this.syncPatients();
+    fixScanTypes();
     this.subscribe();
     updateSyncBadge(); render();
   },
@@ -1416,10 +1422,21 @@ function seedExamples(){
   Store.save();
 }
 
+/* Opdrachten die handmatig als "Anders: Scannen" zijn aangemaakt, omzetten naar het type Scannen */
+function fixScanTypes(){
+  for (const cur of Store.tasks){
+    if (cur.type === 'anders' && /^\s*scan(nen)?\s*$/i.test(cur.typeCustom || '')){
+      const t = clone(cur); t.type = 'scan'; t.typeCustom = '';
+      commit(t, 'Type omgezet naar Scannen');
+    }
+  }
+}
+
 /* ---------- start ---------- */
 if (!Store.init() && !ONLINE.url) seedExamples();
 if (ONLINE.url) Store.tasks = Store.tasks.filter(t => !t.example);
 Patients.init();
+if (!ONLINE.url) fixScanTypes();
 applySplit();
 render();
 Sync.start();
