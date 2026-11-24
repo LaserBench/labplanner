@@ -95,5 +95,7 @@
   .bill-split.has-sel .ic-list{display:none}
   .btn.ie-back{display:inline-flex}
   .fr{grid-template-columns:1fr auto;}
-  .fr span{display:none}
+  .fr span:not(.fr-acts){display:none}
 }
+.fr-acts{display:flex;gap:6px;justify-content:flex-end;align-items:center}
+.fold-acts .spacer{flex:1}

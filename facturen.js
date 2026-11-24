@@ -222,6 +222,64 @@ async function dropInv(inv, btn){
   await Db.remove('invoices', [inv.id]);
   S.invoices = S.invoices.filter(i => i !== inv); S.sel = null; draw(); toast('Concept verwijderd; de opdrachten worden niet gefactureerd');
 }
+// Tweede klik binnen 4 seconden = bevestigen
+const armed = {};
+function confirmClick(btn, key, text){
+  if (armed[key] && Date.now() < armed[key]){ delete armed[key]; return true; }
+  armed[key] = Date.now() + 4000;
+  const old = btn.textContent; btn.textContent = text; btn.classList.add('armed');
+  setTimeout(() => { if (btn.isConnected){ btn.textContent = old; btn.classList.remove('armed'); } }, 4000);
+  return false;
+}
+// Geaccepteerde factuur verwijderen; latere nummers van dat jaar schuiven één op (geen gat in de nummering)
+async function deleteAccepted(inv, btn){
+  if (!confirmClick(btn, 'del' + inv.id, `Nogmaals klikken: ${inv.number} verwijderen`)) return;
+  const num = inv.number, taskIds = [...new Set(inv.lines.map(l => l.taskId).filter(Boolean))];
+  try {
+    let moved = 0;
+    if (Db.online){ const {data, error} = await A.Sync.client.rpc('delete_accepted_invoice', {p_id:inv.id}); if (error) throw error; moved = data || 0; }
+    else moved = await localDelete(inv);
+    for (const id of taskIds) linkTask(id, 'none', `Factuur ${num} verwijderd`);
+    await load(true); S.sel = null; draw();
+    toast(moved ? `Factuur ${num} verwijderd; ${moved} latere ${moved === 1 ? 'factuur schoof' : 'facturen schoven'} één nummer op` : `Factuur ${num} verwijderd`);
+  } catch (e){ toast('Verwijderen mislukt: ' + (e.message || e)); }
+}
+async function localDelete(inv){
+  const all = await Db.all('invoices'), y = inv.number.slice(0,4), seq = +inv.number.slice(6);
+  if (all.some(i => i.status === 'verstuurd' && i.number && i.number.slice(0,4) === y && +i.number.slice(6) > seq)) throw new Error('Er is al een latere factuur verstuurd; de nummers kunnen niet meer opschuiven');
+  let moved = 0;
+  const rest = all.filter(i => i.id !== inv.id).sort((a,b) => (a.number || '').localeCompare(b.number || '')).map(i => {
+    if (i.number && i.number.slice(0,4) === y && +i.number.slice(6) > seq){ i.number = i.number.slice(0,6) + pad(+i.number.slice(6) - 1, 4); moved++; }
+    return i;
+  });
+  A.writeLS(Db.key('invoices'), rest);
+  const ctr = await Db.all('counters'), c = ctr.find(x => x.key === 'invoice' && x.year === +y);
+  if (c){ c.value--; A.writeLS(Db.key('counters'), ctr); }
+  return moved;
+}
+// Export ongedaan maken: alle facturen uit dit betaaloverzicht terug naar Geaccepteerd
+async function undoOverview(ref, btn){
+  if (!confirmClick(btn, 'undo' + ref, `Nogmaals klikken: export ${ref} ongedaan maken`)) return;
+  try {
+    let n = 0;
+    if (Db.online){ const {data, error} = await A.Sync.client.rpc('undo_payment_overview', {p_ref:ref}); if (error) throw error; n = data || 0; }
+    else {
+      const all = await Db.all('invoices');
+      all.forEach(i => { if (i.payment_ref === ref){ i.status = 'geaccepteerd'; i.payment_ref = null; i.sent_at = null; n++; } });
+      A.writeLS(Db.key('invoices'), all);
+      await Db.remove('payment_overviews', [ref], 'ref');
+      const ctr = await Db.all('counters'), c = ctr.find(x => x.key === 'payref' && x.year === +ref.slice(0,4));
+      if (c && c.value === +ref.slice(4)){ c.value--; A.writeLS(Db.key('counters'), ctr); }
+    }
+    await load(true); S.tab = 'geaccepteerd'; S.sel = null; draw();
+    toast(`Export ${ref} ongedaan gemaakt: ${n} ${n === 1 ? 'factuur staat' : 'facturen staan'} weer onder Geaccepteerd`);
+  } catch (e){ toast('Ongedaan maken mislukt: ' + (e.message || e)); }
+}
+async function unsendSingle(inv, btn){
+  if (!confirmClick(btn, 'unsend' + inv.id, 'Nogmaals klikken')) return;
+  inv.status = 'geaccepteerd'; inv.sent_at = null; await saveInv(inv);
+  S.tab = 'geaccepteerd'; S.sel = inv.id; draw(); toast(`Factuur ${inv.number} staat weer onder Geaccepteerd`);
+}
 async function newManual(){
   const c = cust(S.cust);
   const inv = {id:A.uid(), customer_id:c.id, status:'concept', kind:'los', lines:[], created_at:A.nowIso()};
@@ -561,7 +619,7 @@ function editorHtml(inv){
       ${inv.status === 'concept' ? `${inv.lines.some(l => l.taskId) ? '<button type="button" class="btn ghost sm" data-act="rebuild" title="Neemt wijzigingen in de opdrachten over">Opnieuw opbouwen</button>' : ''}
         <button type="button" class="btn danger-ghost sm" data-act="drop">Niet factureren</button><span class="spacer"></span>
         <button type="button" class="btn primary" data-act="accept">Accepteren</button>` : ''}
-      ${inv.status === 'geaccepteerd' ? `<span class="hint">Komt mee in het volgende betaaloverzicht.</span><span class="spacer"></span><button type="button" class="btn ghost sm" data-act="single">Los exporteren (zonder betaaloverzicht)</button>` : ''}
+      ${inv.status === 'geaccepteerd' ? `<button type="button" class="btn danger-ghost sm" data-act="delete" title="Latere factuurnummers schuiven één op, zodat er geen gat valt">Factuur verwijderen</button><span class="hint">Komt mee in het volgende betaaloverzicht.</span><span class="spacer"></span><button type="button" class="btn ghost sm" data-act="single">Los exporteren (zonder betaaloverzicht)</button>` : ''}
     </div>
   </div>`;
 }
@@ -573,8 +631,8 @@ function sentHtml(){
     <button type="button" class="fold-h" data-fold="${esc(key)}"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6.5A1.5 1.5 0 0 1 4.5 5H9l2 2.5h8.5A1.5 1.5 0 0 1 21 9v9.5a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.5z" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.5"/></svg>
       <span class="fold-t"><b>${esc(title)}</b><small>${esc(sub)}</small></span><b class="fold-sum">${eur(invs.reduce((s,i) => s + totals(i).incl, 0))}</b></button>
     ${S.open[key] ? `<div class="fold-b">
-      ${ov ? `<div class="fold-acts"><button type="button" class="btn ghost sm" data-ov="${esc(ov.ref)}">Betaaloverzicht openen</button><button type="button" class="btn ghost sm" data-zip="${esc(ov.ref)}">Map opnieuw downloaden (ZIP)</button></div>` : ''}
-      ${invs.sort((a,b) => (a.number || '').localeCompare(b.number || '')).map(i => `<div class="fr"><b class="mono">${esc(i.number)}</b><span>${dmy(i.invoice_date)}</span><span class="fr-d">${esc(invPatients(i).join(', ') || i.lines.map(l => l.desc).join(', '))}</span><b>${eur(totals(i).incl)}</b><button type="button" class="btn ghost sm" data-openinv="${esc(i.id)}">Openen</button></div>`).join('')}
+      ${ov ? `<div class="fold-acts"><button type="button" class="btn ghost sm" data-ov="${esc(ov.ref)}">Betaaloverzicht openen</button><button type="button" class="btn ghost sm" data-zip="${esc(ov.ref)}">Map opnieuw downloaden (ZIP)</button><span class="spacer"></span><button type="button" class="btn danger-ghost sm" data-undo="${esc(ov.ref)}" title="Alle facturen uit deze map gaan terug naar Geaccepteerd">Export ongedaan maken</button></div>` : ''}
+      ${invs.sort((a,b) => (a.number || '').localeCompare(b.number || '')).map(i => `<div class="fr"><b class="mono">${esc(i.number)}</b><span>${dmy(i.invoice_date)}</span><span class="fr-d">${esc(invPatients(i).join(', ') || i.lines.map(l => l.desc).join(', '))}</span><b>${eur(totals(i).incl)}</b><span class="fr-acts">${ov ? '' : `<button type="button" class="btn danger-ghost sm" data-unsend="${esc(i.id)}" title="Terug naar Geaccepteerd">Terugzetten</button>`}<button type="button" class="btn ghost sm" data-openinv="${esc(i.id)}">Openen</button></span></div>`).join('')}
     </div>` : ''}
   </div>`;
   let h = ovs.map(o => folder(o.ref, `${o.ref} · ${dmyDash(A.ymd(new Date(o.created_at)))} · ${c.short_name || c.company}`, `${o.invoice_numbers.length} facturen · ${dmy(o.period_from)} t/m ${dmy(o.period_to)}`, mine.filter(i => i.payment_ref === o.ref), o)).join('');
@@ -647,6 +705,8 @@ view.addEventListener('click', async e => {
   const task = e.target.closest('[data-task]'); if (task){ A.showView('planner'); A.openEditor(task.dataset.task); return; }
   const fold = e.target.closest('[data-fold]'); if (fold){ S.open[fold.dataset.fold] = !S.open[fold.dataset.fold]; draw(); return; }
   const oi = e.target.closest('[data-openinv]'); if (oi){ const inv = S.invoices.find(i => i.id === oi.dataset.openinv); if (inv) viewPdf(`Factuur ${inv.number}`, Pdf.invoice(inv, cust(inv.customer_id)), `${inv.number}.pdf`); return; }
+  const ub = e.target.closest('[data-undo]'); if (ub){ undoOverview(ub.dataset.undo, ub); return; }
+  const usb = e.target.closest('[data-unsend]'); if (usb){ const inv = S.invoices.find(i => i.id === usb.dataset.unsend); if (inv) unsendSingle(inv, usb); return; }
   const ovb = e.target.closest('[data-ov]'), zb = e.target.closest('[data-zip]');
   if (ovb || zb){
     const ov = S.overviews.find(o => o.ref === (ovb || zb).dataset[ovb ? 'ov' : 'zip']); if (!ov) return;
@@ -665,6 +725,7 @@ view.addEventListener('click', async e => {
   if (a === 'single') exportSingle(inv);
   if (a === 'rebuild') rebuildInv(inv);
   if (a === 'drop') dropInv(inv, act);
+  if (a === 'delete') deleteAccepted(inv, act);
   if (a === 'rmline'){ const li = +act.closest('.il').dataset.li; inv.lines.splice(li, 1); await saveInv(inv); draw(); }
 });
 
