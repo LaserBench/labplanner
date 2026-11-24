@@ -134,13 +134,13 @@ function totals(inv){
   return {excl, vat, vatTotal, incl:round2(excl + vatTotal)};
 }
 const lineIncl = l => { const a = round2((+l.qty || 0) * (+l.price || 0)); return l.vat && l.vat !== 'vrijgesteld' ? round2(a * (1 + (+l.vat) / 100)) : a; };
-const kindLabel = k => ({patient:'Per patiënt', tryin:'Pasprotheses (verzamel)', lepel:'Afdruklepels (verzamel)', los:'Losse factuur'})[k] || k;
+const kindLabel = k => ({patient:'Per patiënt', tryin:'Pasprotheses (verzamel)', lepel:'Afdruklepels (verzamel)', los:'Losse factuur', credit:'Creditfactuur'})[k] || k;
 const invPatients = inv => [...new Set((inv.lines || []).map(l => { const n = (l.info || []).find(s => s.startsWith('Patiënt:')); return n ? n.slice(8).trim() : ''; }).filter(Boolean))];
 
 async function saveInv(inv){
   inv.total = totals(inv).incl; inv.updated_at = A.nowIso();
   const row = {id:inv.id, customer_id:inv.customer_id, status:inv.status, kind:inv.kind, open_key:inv.open_key || null, number:inv.number || null,
-    invoice_date:inv.invoice_date || null, due_date:inv.due_date || null, payment_ref:inv.payment_ref || null, lines:inv.lines, total:inv.total,
+    invoice_date:inv.invoice_date || null, due_date:inv.due_date || null, payment_ref:inv.payment_ref || null, credit_of:inv.credit_of || null, lines:inv.lines, total:inv.total,
     created_at:inv.created_at || A.nowIso(), updated_at:inv.updated_at, accepted_at:inv.accepted_at || null, sent_at:inv.sent_at || null};
   await Db.upsert('invoices', row);
 }
@@ -196,6 +196,10 @@ async function syncConcepts(){
 /* ---------- acties ---------- */
 async function acceptInv(inv){
   if (!inv.lines.length){ toast('Deze factuur heeft geen regels.'); return; }
+  if (inv.kind === 'credit'){
+    if (!(inv.credit_of || '').trim()){ toast('Vul in welke factuur je crediteert.'); return; }
+    if (totals(inv).incl >= 0){ toast('Een creditfactuur moet een negatief bedrag hebben (aantal -1).'); return; }
+  }
   const miss = inv.lines.filter(l => (l.info || []).some(s => /^lot ?nummer[^:]*:\s*$/i.test(s)));
   if (miss.length){ toast(`Vul eerst het lotnummer in bij: ${miss.map(l => l.desc).slice(0,2).join(', ')}${miss.length > 2 ? '…' : ''}`); return; }
   const d = new Date(), y = d.getFullYear();
@@ -280,6 +284,14 @@ async function unsendSingle(inv, btn){
   inv.status = 'geaccepteerd'; inv.sent_at = null; await saveInv(inv);
   S.tab = 'geaccepteerd'; S.sel = inv.id; draw(); toast(`Factuur ${inv.number} staat weer onder Geaccepteerd`);
 }
+// Creditfactuur: vanuit een verstuurde factuur (alle regels negatief) of los, voor een factuur van vóór de planner
+async function newCredit(from){
+  const inv = {id:A.uid(), customer_id:from ? from.customer_id : S.cust, status:'concept', kind:'credit', credit_of:from ? from.number : '',
+    lines:from ? from.lines.map(l => ({...A.clone(l), id:A.uid(), qty:-Math.abs(+l.qty || 1), taskId:null})) : [], created_at:A.nowIso()};
+  S.invoices.push(inv); await saveInv(inv);
+  S.cust = inv.customer_id; S.tab = 'concept'; S.sel = inv.id; draw();
+  toast(from ? `Creditfactuur voor ${from.number} klaargezet. Haal regels weg die je niet wilt crediteren.` : 'Creditfactuur klaargezet. Vul het factuurnummer in en voeg de regel(s) toe.');
+}
 async function newManual(){
   const c = cust(S.cust);
   const inv = {id:A.uid(), customer_id:c.id, status:'concept', kind:'los', lines:[], created_at:A.nowIso()};
@@ -296,6 +308,7 @@ function addLine(inv, code){
     l = lineFrom(code, {nr:'', name:'', lot});
     if (c.default_vat && c.default_vat !== 'vrijgesteld' && (p.vat || 'vrijgesteld') === 'vrijgesteld') l.vat = c.default_vat;
   }
+  if (inv.kind === 'credit') l.qty = -1;
   l.sort = 'z' + Date.now();
   inv.lines.push(l);
 }
@@ -371,7 +384,8 @@ const Pdf = {
     const res = await this.init(), d = this.doc(res);
     const L = 16, R = 194, CX = 153, BOTTOM = 270, t = totals(inv);
     if (res.logo) d.addImage(res.logo.data, 'JPEG', L, 12, 30, 30 * res.logo.h / res.logo.w);
-    d.F('b', 12.5); d.text(`Factuur: ${inv.number || 'CONCEPT'}`, R, 22, {align:'right'});
+    const credit = inv.kind === 'credit';
+    d.F('b', 12.5); d.text(`${credit ? 'Creditfactuur' : 'Factuur'}: ${inv.number || 'CONCEPT'}`, R, 22, {align:'right'});
     // klant
     let y = 64;
     d.F('b', 12.5); d.text(c.company || '', L, y); y += 6.4;
@@ -386,7 +400,7 @@ const Pdf = {
     for (const s of [`KVK-nummer: ${COMPANY.kvk}`, `Tel.: ${COMPANY.tel}`, `E-mail: ${COMPANY.email}`, `Website: ${COMPANY.web}`, `IBAN: ${COMPANY.iban}`, `BIC: ${COMPANY.bic}`]){ d.text(s, R, ry, {align:'right'}); ry += 4.2; }
     // datums
     y = 107; d.F('r', 8.5);
-    for (const s of [`Factuurdatum: ${dmy(inv.invoice_date) || '—'}`, `Vervaldatum: ${dmy(inv.due_date) || '—'}`, `Klantnummer: ${c.id}`]){ d.text(s, L, y); y += 4.2; }
+    for (const s of [`Factuurdatum: ${dmy(inv.invoice_date) || '—'}`, credit ? `Creditering van factuur: ${inv.credit_of || '—'}` : `Vervaldatum: ${dmy(inv.due_date) || '—'}`, `Klantnummer: ${c.id}`]){ d.text(s, L, y); y += 4.2; }
     const head = yy => {
       d.F('r', 8.5);
       d.text('Aantal', L, yy); d.text('Beschrijving', L + 13, yy);
@@ -421,8 +435,8 @@ const Pdf = {
     y += 4.5; d.line(L, y, R, y); y += 7;
     d.F('b', 11); d.text('Totaalbedrag incl. btw', CX, y, {align:'right'}); d.text(eur(t.incl), R, y, {align:'right'});
     // betaaltekst
-    const pay1 = `Gelieve dit bedrag van ${eur(t.incl)} over te maken voor: ${dmy(inv.due_date) || '—'} op rekeningnummer:`;
-    const pay2 = `${COMPANY.iban} t.n.v. ${COMPANY.name} o.v.v. "Factuur ${inv.number || 'CONCEPT'}".`;
+    const pay1 = credit ? `Dit creditbedrag van ${eur(Math.abs(t.incl))} wordt verrekend met uw openstaande facturen,` : `Gelieve dit bedrag van ${eur(t.incl)} over te maken voor: ${dmy(inv.due_date) || '—'} op rekeningnummer:`;
+    const pay2 = credit ? `ter correctie van factuur ${inv.credit_of || '—'}. U hoeft voor deze creditfactuur niets te betalen.` : `${COMPANY.iban} t.n.v. ${COMPANY.name} o.v.v. "Factuur ${inv.number || 'CONCEPT'}".`;
     let py = 248;
     if (y > 232){ d.addPage(); py = 72; }
     d.F('r', 10.5); d.text(pay1, 105, py, {align:'center'}); d.text(pay2, 105, py + 6.2, {align:'center'});
@@ -448,10 +462,11 @@ const Pdf = {
     for (const inv of list){
       if (y > BOTTOM - 25){ d.addPage(); y = head(24); }
       const t = totals(inv);
-      let oms = inv.lines.map(l => l.desc).join(', ');
+      const full = (inv.kind === 'credit' ? `Creditfactuur voor ${inv.credit_of || '?'}: ` : '') + inv.lines.map(l => l.desc).join(', ');
+      let oms = full;
       d.F('r', 7.6);
       while (oms.length > 3 && d.getTextWidth(oms) > cols.excl - 16 - cols.oms) oms = oms.slice(0, -2);
-      if (oms !== inv.lines.map(l => l.desc).join(', ')) oms = oms.replace(/[ ,]+$/, '') + '…';
+      if (oms !== full) oms = oms.replace(/[ ,]+$/, '') + '…';
       d.text(name, cols.klant, y); d.text(dmy(inv.invoice_date), cols.datum, y); d.text(inv.number, cols.nr, y); d.text(oms, cols.oms, y);
       d.text(eur(t.excl), cols.excl, y, {align:'right'}); d.text(t.vatTotal ? eur(t.vatTotal) : 'vrijgesteld', cols.btw, y, {align:'right'});
       d.F('m', 7.6); d.text(eur(t.incl), cols.incl, y, {align:'right'});
@@ -515,7 +530,7 @@ function revenue(){
   }
   // Losse facturen voor andere klanten tellen mee op hun factuurdatum
   for (const inv of S.invoices){
-    if (inv.kind !== 'los' || inv.status === 'concept' || !inv.invoice_date) continue;
+    if ((inv.kind !== 'los' && inv.kind !== 'credit') || inv.status === 'concept' || !inv.invoice_date) continue;
     const v = totals(inv).excl, wk = weekKey(inv.invoice_date);
     add(wk, 'earned', v); days[inv.invoice_date] = (days[inv.invoice_date] || 0) + v;
     if (inv.invoice_date.startsWith(year)) yearEarned += v;
@@ -588,7 +603,7 @@ function counts(){
 function invCard(inv){
   const t = totals(inv), pts = invPatients(inv), miss = inv.lines.some(l => (l.info || []).some(s => /^lot ?nummer[^:]*:\s*$/i.test(s)));
   return `<button type="button" class="ic${S.sel === inv.id ? ' sel' : ''}" data-inv="${esc(inv.id)}">
-    <span class="ic-top"><b>${inv.number ? esc(inv.number) : 'Concept'}</b><span class="ic-kind">${kindLabel(inv.kind)}</span></span>
+    <span class="ic-top"><b>${inv.number ? esc(inv.number) : 'Concept'}</b><span class="ic-kind${inv.kind === 'credit' ? ' credit' : ''}">${kindLabel(inv.kind)}${inv.credit_of ? ' ' + esc(inv.credit_of) : ''}</span></span>
     <span class="ic-pt">${pts.length ? esc(pts.slice(0,4).join(', ')) + (pts.length > 4 ? ` +${pts.length - 4}` : '') : esc((inv.lines[0] || {}).desc || 'Nog geen regels')}</span>
     <span class="ic-bot"><span>${inv.lines.length} ${inv.lines.length === 1 ? 'regel' : 'regels'}${inv.invoice_date ? ' · ' + dmy(inv.invoice_date) : ''}</span>${miss ? '<span class="ic-warn">lotnummer ontbreekt</span>' : ''}<b>${eur(t.incl)}</b></span>
   </button>`;
@@ -598,9 +613,10 @@ function editorHtml(inv){
   const prodOpts = `<option value="">+ Regel toevoegen…</option>` + S.products.filter(p => p.active !== false).map(p => `<option value="${esc(p.code)}">${esc(p.name)} · ${eur(p.price)}</option>`).join('') + '<option value="__vrij">Vrije regel (eigen omschrijving en prijs)</option>';
   return `<div class="ie">
     <div class="ie-head">
-      <div><h3>${inv.number ? 'Factuur ' + esc(inv.number) : 'Conceptfactuur'}</h3><span class="hint">${esc(c.company || '')} · ${kindLabel(inv.kind)}${inv.invoice_date ? ' · ' + dmy(inv.invoice_date) + ', vervalt ' + dmy(inv.due_date) : ''}</span></div>
+      <div><h3>${inv.kind === 'credit' ? (inv.number ? 'Creditfactuur ' + esc(inv.number) : 'Concept-creditfactuur') : inv.number ? 'Factuur ' + esc(inv.number) : 'Conceptfactuur'}</h3><span class="hint">${esc(c.company || '')} · ${kindLabel(inv.kind)}${inv.invoice_date ? ' · ' + dmy(inv.invoice_date) + ', vervalt ' + dmy(inv.due_date) : ''}</span></div>
       <button type="button" class="btn ghost sm" data-act="pdf">Voorbeeld PDF</button>
     </div>
+    ${inv.kind === 'credit' ? `<label class="ie-credit"><span>Crediteert factuur</span><input type="text" class="mono" data-inv-f="credit_of" value="${esc(inv.credit_of || '')}" placeholder="bijv. 2026100209" autocomplete="off"${ro ? ' disabled' : ''}><small>Bedragen staan als min (aantal -1) en worden in het betaaloverzicht afgetrokken.</small></label>` : ''}
     ${inv.kind === 'tryin' || inv.kind === 'lepel' ? `<p class="ie-note">Elke afgeronde ${inv.kind === 'tryin' ? 'pasprothese' : 'afdruklepel'} komt automatisch op deze verzamelfactuur, tot je hem accepteert. Daarna begint een nieuwe.</p>` : ''}
     <div class="ie-lines">${inv.lines.map((l,i) => `<div class="il" data-li="${i}">
         <div class="il-row">
@@ -632,7 +648,7 @@ function sentHtml(){
       <span class="fold-t"><b>${esc(title)}</b><small>${esc(sub)}</small></span><b class="fold-sum">${eur(invs.reduce((s,i) => s + totals(i).incl, 0))}</b></button>
     ${S.open[key] ? `<div class="fold-b">
       ${ov ? `<div class="fold-acts"><button type="button" class="btn ghost sm" data-ov="${esc(ov.ref)}">Betaaloverzicht openen</button><button type="button" class="btn ghost sm" data-zip="${esc(ov.ref)}">Map opnieuw downloaden (ZIP)</button><span class="spacer"></span><button type="button" class="btn danger-ghost sm" data-undo="${esc(ov.ref)}" title="Alle facturen uit deze map gaan terug naar Geaccepteerd">Export ongedaan maken</button></div>` : ''}
-      ${invs.sort((a,b) => (a.number || '').localeCompare(b.number || '')).map(i => `<div class="fr"><b class="mono">${esc(i.number)}</b><span>${dmy(i.invoice_date)}</span><span class="fr-d">${esc(invPatients(i).join(', ') || i.lines.map(l => l.desc).join(', '))}</span><b>${eur(totals(i).incl)}</b><span class="fr-acts">${ov ? '' : `<button type="button" class="btn danger-ghost sm" data-unsend="${esc(i.id)}" title="Terug naar Geaccepteerd">Terugzetten</button>`}<button type="button" class="btn ghost sm" data-openinv="${esc(i.id)}">Openen</button></span></div>`).join('')}
+      ${invs.sort((a,b) => (a.number || '').localeCompare(b.number || '')).map(i => `<div class="fr"><b class="mono">${esc(i.number)}</b><span>${dmy(i.invoice_date)}</span><span class="fr-d">${esc(invPatients(i).join(', ') || i.lines.map(l => l.desc).join(', '))}</span><b>${eur(totals(i).incl)}</b><span class="fr-acts">${ov ? '' : `<button type="button" class="btn danger-ghost sm" data-unsend="${esc(i.id)}" title="Terug naar Geaccepteerd">Terugzetten</button>`}${i.kind !== 'credit' ? `<button type="button" class="btn ghost sm" data-credit="${esc(i.id)}" title="Maakt een creditfactuur met dezelfde regels als min-bedrag">Crediteren</button>` : ''}<button type="button" class="btn ghost sm" data-openinv="${esc(i.id)}">Openen</button></span></div>`).join('')}
     </div>` : ''}
   </div>`;
   let h = ovs.map(o => folder(o.ref, `${o.ref} · ${dmyDash(A.ymd(new Date(o.created_at)))} · ${c.short_name || c.company}`, `${o.invoice_numbers.length} facturen · ${dmy(o.period_from)} t/m ${dmy(o.period_to)}`, mine.filter(i => i.payment_ref === o.ref), o)).join('');
@@ -666,6 +682,7 @@ function draw(){
       </div>
       <span class="spacer"></span>
       <button type="button" class="btn ghost" id="bNew">+ Nieuwe factuur</button>
+      <button type="button" class="btn ghost" id="bCredit" title="Voor een factuur die al betaald is of van vóór de planner">+ Creditfactuur</button>
       <button type="button" class="btn primary" id="bExport"${n.acc ? '' : ' disabled'}>Exporteer betaaloverzicht${n.acc ? ` (${n.acc})` : ''}</button>
     </div>
     <div class="bill-body">${body}</div>
@@ -681,7 +698,14 @@ function drawTotalsOnly(){
 
 let saveTimer = null;
 view.addEventListener('input', e => {
-  const el = e.target, li = el.closest('.il'); if (!li) return;
+  const el = e.target;
+  if (el.dataset.invF){
+    const inv = S.invoices.find(i => i.id === S.sel); if (!inv) return;
+    inv[el.dataset.invF] = el.value.trim();
+    clearTimeout(saveTimer); saveTimer = setTimeout(() => saveInv(inv).catch(err => toast('Opslaan mislukt: ' + err.message)), 600);
+    return;
+  }
+  const li = el.closest('.il'); if (!li) return;
   const inv = S.invoices.find(i => i.id === S.sel); if (!inv) return;
   const l = inv.lines[+li.dataset.li], f = el.dataset.f; if (!l || !f) return;
   if (f === 'qty') l.qty = +el.value || 0;
@@ -700,6 +724,8 @@ view.addEventListener('change', async e => {
 view.addEventListener('click', async e => {
   const tab = e.target.closest('[data-tab]'); if (tab){ S.tab = tab.dataset.tab; S.sel = null; draw(); return; }
   if (e.target.closest('#bNew')){ newManual(); return; }
+  if (e.target.closest('#bCredit')){ newCredit(null); return; }
+  const cr = e.target.closest('[data-credit]'); if (cr){ const src = S.invoices.find(i => i.id === cr.dataset.credit); if (src) newCredit(src); return; }
   if (e.target.closest('#bExport')){ exportOverview(); return; }
   const card = e.target.closest('[data-inv]'); if (card){ S.sel = card.dataset.inv; draw(); return; }
   const task = e.target.closest('[data-task]'); if (task){ A.showView('planner'); A.openEditor(task.dataset.task); return; }

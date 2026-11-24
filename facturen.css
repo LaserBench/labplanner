@@ -99,3 +99,7 @@
 }
 .fr-acts{display:flex;gap:6px;justify-content:flex-end;align-items:center}
 .fold-acts .spacer{flex:1}
+.ic-kind.credit{color:var(--danger)}
+.ie-credit{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;background:var(--danger-soft);border-radius:8px;padding:8px 10px;font-size:13px;font-weight:600}
+.ie-credit input{width:160px;height:34px;background:var(--surface)}
+.ie-credit small{flex-basis:100%;font-weight:400;color:var(--fg-2);font-size:12px}
